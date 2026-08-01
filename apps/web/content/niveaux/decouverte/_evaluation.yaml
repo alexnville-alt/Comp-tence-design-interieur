@@ -1,0 +1,65 @@
+title: "Évaluation — Découverte"
+passingScore: 70
+exercises:
+  - slug: eval-decouverte-criteres
+    type: QUIZ_MCQ
+    prompt: "Lequel de ces critères doit toujours être validé en premier dans un espace ?"
+    explanation: "La fonction se valide en premier : c'est la plus coûteuse à corriger après coup."
+    choices:
+      - "L'identité"
+      - "La cohérence"
+      - "La fonction"
+      - "Le confort"
+    correctIndices: [2]
+
+  - slug: eval-decouverte-point-focal
+    type: QUIZ_TRUE_FALSE
+    prompt: "Vrai ou faux : une pièce peut avoir plusieurs points focaux sans que cela pose problème."
+    explanation: "Un point focal qui en concurrence un autre casse la lecture de la pièce — l'erreur 7 du catalogue le rappelle."
+    statement: "Une pièce peut avoir plusieurs points focaux sans que cela pose problème."
+    correct: false
+
+  - slug: eval-decouverte-vocabulaire
+    type: QUIZ_MATCH
+    prompt: "Associez chaque terme de vocabulaire à sa définition."
+    explanation: "Voir la leçon « Le vocabulaire de base »."
+    pairs:
+      - left: "Zone"
+        right: "Une portion de la pièce dédiée à un usage précis"
+      - left: "Palette"
+        right: "L'ensemble cohérent des couleurs et matières utilisées"
+      - left: "Circulation"
+        right: "Les trajets empruntés pour se déplacer"
+
+  - slug: eval-decouverte-grille-lecture
+    type: QUIZ_ORDER
+    prompt: "Remettez les cinq questions de la grille de lecture dans leur ordre."
+    explanation: "Usage, point focal, circulation, palette, puis usage réel des objets — l'usage se juge toujours avant le visuel."
+    items:
+      - "À quoi sert cette pièce, précisément ?"
+      - "Où va le regard en premier ?"
+      - "Comment circule-t-on ?"
+      - "Combien de matières et de couleurs dominantes ?"
+      - "Qu'est-ce qui est réellement utilisé, et qu'est-ce qui est décoratif ?"
+
+  - slug: eval-decouverte-hotspot
+    type: HOTSPOT
+    prompt: "Cliquez sur l'élément qui joue le rôle de point focal dans ce salon."
+    explanation: "La cheminée capte le regard en premier — c'est elle le point focal, pas le canapé ni le tapis."
+    imageLabel: "Schéma d'un salon avec canapé, cheminée et tapis"
+    zones:
+      - x: 20
+        y: 70
+        radius: 12
+        label: "Canapé"
+        correct: false
+      - x: 55
+        y: 25
+        radius: 10
+        label: "Cheminée"
+        correct: true
+      - x: 35
+        y: 85
+        radius: 10
+        label: "Tapis"
+        correct: false

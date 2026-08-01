@@ -6,6 +6,7 @@ import { prisma } from "@atelier/db";
 import { isLevelUnlocked } from "@atelier/domain";
 import { cn } from "@atelier/ui";
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { requireOnboardedUser } from "@/lib/auth";
 
 export async function generateMetadata({
@@ -36,6 +37,7 @@ export default async function NiveauPage({
         orderBy: { number: "asc" },
         include: { lessons: { where: { published: true }, orderBy: { number: "asc" } } },
       },
+      assessment: true,
     },
   });
   if (!level) notFound();
@@ -45,10 +47,17 @@ export default async function NiveauPage({
     select: { startingLevel: true },
   });
   const startingLevel = profile?.startingLevel ?? 1;
-  // Aucun `LevelProgress` n'existe encore (M3, quiz de fin de niveau) : un
-  // niveau ne peut se déverrouiller aujourd'hui que via `startingLevel`.
-  const completedLevels: number[] = [];
+  const completedLevelProgress = await prisma.levelProgress.findMany({
+    where: { userId: user.id, completedAt: { not: null } },
+    select: { level: { select: { number: true } } },
+  });
+  const completedLevels = completedLevelProgress.map((p) => p.level.number);
   const unlocked = isLevelUnlocked(level.number, completedLevels, startingLevel);
+
+  const ownProgress = await prisma.levelProgress.findUnique({
+    where: { userId_levelId: { userId: user.id, levelId: level.id } },
+    select: { completedAt: true, bestScore: true },
+  });
 
   const lessonIds = level.chapters.flatMap((chapter) =>
     chapter.lessons.map((lesson) => lesson.id),
@@ -126,6 +135,25 @@ export default async function NiveauPage({
           </section>
         ))
       )}
+
+      {unlocked && level.assessment ? (
+        <section className="space-y-3 rounded-[var(--radius-atelier)] border border-[var(--border)] bg-[var(--surface-raised)] p-5">
+          <h2 className="text-xl">{level.assessment.title}</h2>
+          <p className="text-sm text-[var(--text-muted)]">
+            Seuil de réussite : {level.assessment.passingScore}/100.
+            {ownProgress?.completedAt
+              ? ` Niveau validé — meilleur score ${ownProgress.bestScore}/100.`
+              : ownProgress?.bestScore != null
+                ? ` Dernier score : ${ownProgress.bestScore}/100. Un échec ne verrouille rien.`
+                : ""}
+          </p>
+          <Button asChild variant={ownProgress?.completedAt ? "secondary" : "primary"}>
+            <Link href={`/parcours/${level.slug}/evaluation`}>
+              {ownProgress?.completedAt ? "Repasser l'évaluation" : "Passer l'évaluation"}
+            </Link>
+          </Button>
+        </section>
+      ) : null}
     </div>
   );
 }

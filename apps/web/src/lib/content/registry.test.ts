@@ -252,4 +252,104 @@ describe("scanContent — erreurs détectées", () => {
     });
     expect(() => scanContent(root)).toThrow(/Slug de chapitre en double/);
   });
+
+  it("rejette deux cartes de même slug dans deux leçons différentes", () => {
+    const root = makeContentRoot();
+    const chapter1 = writeChapter(root, LEVEL_1_SLUG, "01-un", {
+      number: 1,
+      slug: "un",
+      title: "Un",
+    });
+    const chapter2 = writeChapter(root, LEVEL_1_SLUG, "02-deux", {
+      number: 2,
+      slug: "deux",
+      title: "Deux",
+    });
+    const cardFrontmatter = [
+      "cards:",
+      "  - slug: carte-partagee",
+      '    front: "Recto"',
+      '    back: "Verso"',
+      '    topic: "vocabulaire"',
+    ].join("\n");
+    writeFileSync(
+      join(chapter1, "01-lecon-a.mdx"),
+      [
+        "---",
+        "slug: lecon-a",
+        "number: 1",
+        'title: "Leçon A"',
+        'summary: "Résumé."',
+        "minutes: 5",
+        cardFrontmatter,
+        "---",
+        "",
+        `<Texte n={1}>A</Texte>`,
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      join(chapter2, "01-lecon-b.mdx"),
+      [
+        "---",
+        "slug: lecon-b",
+        "number: 1",
+        'title: "Leçon B"',
+        'summary: "Résumé."',
+        "minutes: 5",
+        cardFrontmatter,
+        "---",
+        "",
+        `<Texte n={1}>B</Texte>`,
+        "",
+      ].join("\n"),
+    );
+    expect(() => scanContent(root)).toThrow(/Slug de carte en double/);
+  });
+});
+
+describe("scanContent — évaluation de fin de niveau", () => {
+  function writeAssessment(root: string, levelSlug: string, yamlContent: string): void {
+    const dir = join(root, "niveaux", levelSlug);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "_evaluation.yaml"), yamlContent);
+  }
+
+  it("lit une évaluation valide", () => {
+    const root = makeContentRoot();
+    writeAssessment(
+      root,
+      LEVEL_1_SLUG,
+      [
+        'title: "Évaluation — Découverte"',
+        "passingScore: 70",
+        "exercises:",
+        "  - slug: exo-1",
+        "    type: QUIZ_TRUE_FALSE",
+        '    prompt: "Un point focal est toujours au centre."',
+        '    explanation: "Faux, cela dépend de ce que l\'œil rencontre en premier."',
+        '    statement: "Un point focal est toujours géométriquement centré."',
+        "    correct: false",
+      ].join("\n"),
+    );
+
+    const registry = scanContent(root);
+    const level1 = registry.levels.find((l) => l.slug === LEVEL_1_SLUG)!;
+    expect(level1.assessment?.title).toBe("Évaluation — Découverte");
+    expect(level1.assessment?.exercises).toHaveLength(1);
+  });
+
+  it("retourne null quand aucune évaluation n'existe", () => {
+    const root = makeContentRoot();
+    const registry = scanContent(root);
+    const level1 = registry.levels.find((l) => l.slug === LEVEL_1_SLUG)!;
+    expect(level1.assessment).toBeNull();
+  });
+
+  it("rejette une évaluation sans exercice, avec le chemin du fichier", () => {
+    const root = makeContentRoot();
+    writeAssessment(root, LEVEL_1_SLUG, ['title: "Vide"', "exercises: []"].join("\n"));
+    expect(() => scanContent(root)).toThrow(/_evaluation\.yaml/);
+    expect(() => scanContent(root)).toThrow(/invalide/);
+  });
 });

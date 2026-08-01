@@ -46,7 +46,7 @@ const NAV: NavItem[] = [
     href: "/revisions",
     label: "Révisions",
     icon: RotateCcw,
-    comingIn: "M3",
+    comingIn: null,
     mobile: true,
   },
   {

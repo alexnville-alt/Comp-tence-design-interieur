@@ -18,10 +18,11 @@ export default async function ParcoursPage() {
   });
 
   const startingLevel = profile?.startingLevel ?? 1;
-  // Aucun niveau n'est encore terminé : la progression arrive avec le moteur
-  // de leçons (M2). Les règles de déverrouillage, elles, sont déjà celles qui
-  // seront utilisées — elles vivent dans @atelier/domain et sont testées.
-  const completed: number[] = [];
+  const completedLevelProgress = await prisma.levelProgress.findMany({
+    where: { userId: user.id, completedAt: { not: null } },
+    select: { level: { select: { number: true } } },
+  });
+  const completed = completedLevelProgress.map((p) => p.level.number);
 
   return (
     <div className="mx-auto max-w-4xl space-y-10 px-6 py-8">

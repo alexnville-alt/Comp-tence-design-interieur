@@ -2,9 +2,11 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
+  AssessmentFrontmatterSchema,
   ChapterMetaSchema,
   LEVELS,
   LessonFrontmatterSchema,
+  type AssessmentFrontmatter,
   type ChapterMeta,
   type LessonFrontmatter,
 } from "@atelier/domain";
@@ -54,6 +56,8 @@ export interface ContentLevel {
   slug: string;
   number: number;
   chapters: ContentChapter[];
+  /** `null` tant qu'aucune `_evaluation.yaml` n'existe pour ce niveau. */
+  assessment: AssessmentFrontmatter | null;
 }
 
 export interface ContentRegistry {
@@ -178,6 +182,31 @@ function readChapter(
 }
 
 /**
+ * Lit `_evaluation.yaml` s'il existe : l'évaluation de fin de niveau est
+ * optionnelle (comme les leçons, elle arrive niveau par niveau) mais, si le
+ * fichier est présent, il doit être valide.
+ */
+function readAssessment(
+  levelSlug: string,
+  levelDirPath: string,
+): AssessmentFrontmatter | null {
+  const assessmentPath = join(levelDirPath, "_evaluation.yaml");
+  if (!existsSync(assessmentPath)) return null;
+
+  const raw = yaml.load(readFileSync(assessmentPath, "utf8"));
+  const parsed = AssessmentFrontmatterSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new ContentValidationError(
+      assessmentPath,
+      `_evaluation.yaml invalide (niveau « ${levelSlug} ») :\n${parsed.error.issues
+        .map((issue) => `  • ${issue.path.join(".") || "(racine)"} : ${issue.message}`)
+        .join("\n")}`,
+    );
+  }
+  return parsed.data;
+}
+
+/**
  * Scanne `contentRoot` et retourne un modèle validé, ou lève une erreur
  * décrivant précisément le premier problème rencontré (fichier concerné,
  * champ en cause).
@@ -207,7 +236,7 @@ export function scanContent(contentRoot: string): ContentRegistry {
       // Pas encore de contenu pour ce niveau — légitime avant M11 : la
       // structure des 15 niveaux existe toujours (LEARN-01), le contenu
       // arrive par lot.
-      return { slug: level.slug, number: level.number, chapters: [] };
+      return { slug: level.slug, number: level.number, chapters: [], assessment: null };
     }
 
     const chapterDirs = readdirSync(levelDir)
@@ -223,7 +252,9 @@ export function scanContent(contentRoot: string): ContentRegistry {
       `niveau « ${level.slug} »`,
     );
 
-    return { slug: level.slug, number: level.number, chapters };
+    const assessment = readAssessment(level.slug, levelDir);
+
+    return { slug: level.slug, number: level.number, chapters, assessment };
   });
 
   assertGlobalUniqueness(levels);
@@ -232,12 +263,16 @@ export function scanContent(contentRoot: string): ContentRegistry {
 }
 
 /**
- * `Lesson.slug` et `Chapter.slug` (par niveau) sont uniques en base — un
- * conflit doit être détecté ici, avec les deux fichiers en cause, plutôt que
- * de remonter comme une contrainte SQL violée sans contexte.
+ * `Lesson.slug`, `Card.slug` (globalement) et `Chapter.slug` (par niveau)
+ * sont uniques en base — un conflit doit être détecté ici, avec les deux
+ * fichiers en cause, plutôt que de remonter comme une contrainte SQL violée
+ * sans contexte. `Exercise.slug` n'a pas besoin de ce contrôle : son
+ * unicité est scopée à sa leçon ou son évaluation, déjà validée par
+ * `ExerciseFrontmatterSchema`/`AssessmentFrontmatterSchema` (domain).
  */
 function assertGlobalUniqueness(levels: ContentLevel[]): void {
   const lessonSlugs = new Map<string, string>(); // slug -> filePath
+  const cardSlugs = new Map<string, string>(); // slug -> filePath (via la leçon qui la déclare)
   for (const level of levels) {
     const chapterSlugs = new Map<string, string>(); // slug -> dirPath, par niveau
     for (const chapter of level.chapters) {
@@ -260,6 +295,18 @@ function assertGlobalUniqueness(levels: ContentLevel[]): void {
           );
         }
         lessonSlugs.set(lesson.frontmatter.slug, lesson.filePath);
+
+        for (const card of lesson.frontmatter.cards) {
+          const existingCard = cardSlugs.get(card.slug);
+          if (existingCard) {
+            throw new Error(
+              `Slug de carte en double : « ${card.slug} » utilisé par ` +
+                `${existingCard} et ${lesson.filePath}. Les slugs de carte sont ` +
+                `globalement uniques.`,
+            );
+          }
+          cardSlugs.set(card.slug, lesson.filePath);
+        }
       }
     }
   }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ExerciseFrontmatterSchema } from "../exercises/schema";
 
 /**
  * Schémas de contenu pédagogique — leçons et chapitres.
@@ -26,6 +27,39 @@ const slugSchema = z
     "Le slug doit être en minuscules, sans accents ni espaces (ex. « quest-ce-qu-un-espace-reussi »).",
   );
 
+/** Ajoute un contrôle d'unicité des `slug` d'un tableau, sans casser le typage. */
+function uniqueSlugs(label: string) {
+  return (items: readonly { slug: string }[], ctx: z.RefinementCtx) => {
+    const seen = new Set<string>();
+    items.forEach((item, index) => {
+      if (seen.has(item.slug)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index, "slug"],
+          message: `Slug de ${label} en double dans la leçon : « ${item.slug} ».`,
+        });
+      }
+      seen.add(item.slug);
+    });
+  };
+}
+
+/**
+ * Une carte mémoire (répétition espacée, M3 — ADR-0007). Générée
+ * automatiquement à la synchronisation depuis le frontmatter : il n'existe
+ * aucune autre façon de créer une carte, la leçon qui la justifie reste donc
+ * toujours la source de vérité.
+ */
+export const CardFrontmatterSchema = z.object({
+  slug: slugSchema,
+  front: z.string().trim().min(1, "Le recto de la carte ne peut pas être vide."),
+  back: z.string().trim().min(1, "Le verso de la carte ne peut pas être vide."),
+  hint: z.string().trim().min(1).optional(),
+  topic: z.string().trim().min(1, "Le thème de la carte ne peut pas être vide."),
+});
+
+export type CardFrontmatter = z.infer<typeof CardFrontmatterSchema>;
+
 export const LessonFrontmatterSchema = z.object({
   slug: slugSchema,
   number: z.number().int().positive("Le numéro de leçon doit être un entier positif."),
@@ -37,6 +71,11 @@ export const LessonFrontmatterSchema = z.object({
   /// vidéo n'existe, jamais une chaîne vide.
   videoUrl: z.string().url("videoUrl doit être une URL valide.").optional(),
   published: z.boolean().default(true),
+  exercises: z
+    .array(ExerciseFrontmatterSchema)
+    .default([])
+    .superRefine(uniqueSlugs("exercice")),
+  cards: z.array(CardFrontmatterSchema).default([]).superRefine(uniqueSlugs("carte")),
 });
 
 export type LessonFrontmatter = z.infer<typeof LessonFrontmatterSchema>;

@@ -60,3 +60,21 @@ Son index est obligatoire dès la première migration.
 **Élevée.** L'état stocké (`stability`, `difficulty`, `dueAt`, `reps`,
 `lapses`, `state`) est suffisant pour repartir sur un autre algorithme, y
 compris SM-2 si un problème apparaissait.
+
+## Addendum (M3) — paliers d'apprentissage infra-journaliers désactivés
+
+`ts-fsrs` est configuré avec `enable_short_term: false`
+(`packages/domain/src/srs/fsrs.ts`). Par défaut, FSRS gère des paliers
+d'apprentissage à l'échelle de la minute (« revoir dans 10 minutes ») hérités
+d'Anki, pensés pour plusieurs passages sur la même carte dans une seule
+session. Le produit ne propose qu'une **file quotidienne** : une carte n'est
+jamais revue deux fois le même jour. Activer ces paliers aurait exigé de
+persister `learning_steps` (absent du modèle `CardReview`, docs/04) pour un
+comportement que l'interface ne peut de toute façon pas exposer.
+
+Conséquence vérifiée par `packages/domain/src/srs/fsrs.test.ts` : même une
+note « À revoir » sur une carte neuve fait directement progresser
+stabilité/difficulté via l'algorithme FSRS plutôt que de placer la carte dans
+un état `LEARNING`/`RELEARNING` intermédiaire — les deux valeurs restent dans
+`CardState` pour rester fidèles à docs/04, mais ne sont, avec ce réglage,
+jamais produites en pratique.

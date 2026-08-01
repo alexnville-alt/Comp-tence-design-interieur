@@ -16,11 +16,73 @@
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prisma } from "@atelier/db";
-import { LEVELS } from "@atelier/domain";
+import { LEVELS, type CardFrontmatter, type ExerciseFrontmatter } from "@atelier/domain";
 import { ContentValidationError } from "../src/lib/content/frontmatter";
 import { scanContent } from "../src/lib/content/registry";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * `payload` porte l'exercice complet (y compris `slug`/`type`/`prompt`,
+ * dupliqués avec leurs colonnes propres) plutôt qu'un sous-ensemble de
+ * champs spécifiques au type : `gradeExercise` (packages/domain) attend un
+ * `ExerciseFrontmatter` entier, et le reconstruire à partir de colonnes
+ * éparpillées serait plus fragile qu'une désérialisation directe suivie
+ * d'une revalidation Zod côté lecture.
+ */
+async function upsertExercise(
+  exercise: ExerciseFrontmatter,
+  order: number,
+  container:
+    | { lessonId: string; assessmentId?: never }
+    | { assessmentId: string; lessonId?: never },
+): Promise<void> {
+  const data = {
+    type: exercise.type,
+    prompt: exercise.prompt,
+    payload: exercise,
+    maxScore: exercise.maxScore,
+    xpReward: exercise.xpReward,
+    order,
+  };
+
+  if ("lessonId" in container && container.lessonId) {
+    await prisma.exercise.upsert({
+      where: { lessonId_slug: { lessonId: container.lessonId, slug: exercise.slug } },
+      update: data,
+      create: { ...data, slug: exercise.slug, lessonId: container.lessonId },
+    });
+  } else if ("assessmentId" in container && container.assessmentId) {
+    await prisma.exercise.upsert({
+      where: {
+        assessmentId_slug: { assessmentId: container.assessmentId, slug: exercise.slug },
+      },
+      update: data,
+      create: { ...data, slug: exercise.slug, assessmentId: container.assessmentId },
+    });
+  }
+}
+
+async function upsertCard(card: CardFrontmatter, lessonId: string): Promise<void> {
+  await prisma.card.upsert({
+    where: { slug: card.slug },
+    update: {
+      lessonId,
+      front: card.front,
+      back: card.back,
+      hint: card.hint ?? null,
+      topic: card.topic,
+    },
+    create: {
+      slug: card.slug,
+      lessonId,
+      front: card.front,
+      back: card.back,
+      hint: card.hint ?? null,
+      topic: card.topic,
+    },
+  });
+}
 
 async function main() {
   const contentRoot = join(__dirname, "..", "content");
@@ -28,6 +90,9 @@ async function main() {
 
   let chapterCount = 0;
   let lessonCount = 0;
+  let exerciseCount = 0;
+  let cardCount = 0;
+  let assessmentCount = 0;
 
   for (const level of registry.levels) {
     const levelMeta = LEVELS.find((l) => l.slug === level.slug);
@@ -45,6 +110,7 @@ async function main() {
         phase: levelMeta.phase,
         estimatedMinutes: levelMeta.estimatedMinutes,
         requiresLevel: levelMeta.requiresLevel,
+        ...(level.assessment ? { passingScore: level.assessment.passingScore } : {}),
       },
       create: {
         number: levelMeta.number,
@@ -54,6 +120,7 @@ async function main() {
         phase: levelMeta.phase,
         estimatedMinutes: levelMeta.estimatedMinutes,
         requiresLevel: levelMeta.requiresLevel,
+        ...(level.assessment ? { passingScore: level.assessment.passingScore } : {}),
       },
     });
 
@@ -72,7 +139,7 @@ async function main() {
 
       for (const lesson of chapter.lessons) {
         lessonCount++;
-        await prisma.lesson.upsert({
+        const dbLesson = await prisma.lesson.upsert({
           where: { slug: lesson.frontmatter.slug },
           update: {
             chapterId: dbChapter.id,
@@ -100,12 +167,44 @@ async function main() {
             published: lesson.frontmatter.published,
           },
         });
+
+        for (const [index, exercise] of lesson.frontmatter.exercises.entries()) {
+          exerciseCount++;
+          await upsertExercise(exercise, index, { lessonId: dbLesson.id });
+        }
+        for (const card of lesson.frontmatter.cards) {
+          cardCount++;
+          await upsertCard(card, dbLesson.id);
+        }
+      }
+    }
+
+    if (level.assessment) {
+      assessmentCount++;
+      const dbAssessment = await prisma.assessment.upsert({
+        where: { levelId: dbLevel.id },
+        update: {
+          title: level.assessment.title,
+          passingScore: level.assessment.passingScore,
+        },
+        create: {
+          levelId: dbLevel.id,
+          title: level.assessment.title,
+          passingScore: level.assessment.passingScore,
+        },
+      });
+
+      for (const [index, exercise] of level.assessment.exercises.entries()) {
+        exerciseCount++;
+        await upsertExercise(exercise, index, { assessmentId: dbAssessment.id });
       }
     }
   }
 
   console.warn(
-    `✓ Contenu synchronisé : ${registry.levels.length} niveaux, ${chapterCount} chapitres, ${lessonCount} leçons.`,
+    `✓ Contenu synchronisé : ${registry.levels.length} niveaux, ${chapterCount} chapitres, ` +
+      `${lessonCount} leçons, ${exerciseCount} exercices, ${cardCount} cartes, ` +
+      `${assessmentCount} évaluations.`,
   );
 }
 

@@ -19,6 +19,8 @@ describe("LessonFrontmatterSchema", () => {
     expect(parsed.xpReward).toBe(20);
     expect(parsed.published).toBe(true);
     expect(parsed.videoUrl).toBeUndefined();
+    expect(parsed.exercises).toEqual([]);
+    expect(parsed.cards).toEqual([]);
   });
 
   it("rejette un slug avec des majuscules, espaces ou accents", () => {
@@ -86,6 +88,62 @@ describe("LessonFrontmatterSchema", () => {
   it("rejette xpReward négatif", () => {
     expect(
       LessonFrontmatterSchema.safeParse({ ...validFrontmatter, xpReward: -10 }).success,
+    ).toBe(false);
+  });
+
+  const card = { slug: "carte-1", front: "Recto", back: "Verso", topic: "vocabulaire" };
+
+  it("accepte des cartes valides", () => {
+    const parsed = LessonFrontmatterSchema.parse({
+      ...validFrontmatter,
+      cards: [card, { ...card, slug: "carte-2" }],
+    });
+    expect(parsed.cards).toHaveLength(2);
+  });
+
+  it("rejette deux cartes de même slug dans la même leçon", () => {
+    expect(
+      LessonFrontmatterSchema.safeParse({
+        ...validFrontmatter,
+        cards: [card, card],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejette une carte sans thème", () => {
+    expect(
+      LessonFrontmatterSchema.safeParse({
+        ...validFrontmatter,
+        cards: [{ ...card, topic: "" }],
+      }).success,
+    ).toBe(false);
+  });
+
+  const exercise = {
+    slug: "exo-1",
+    type: "QUIZ_TRUE_FALSE" as const,
+    prompt: "Un point focal est toujours au centre de la pièce.",
+    explanation:
+      "Le point focal dépend de ce que l'œil rencontre en premier, pas du centre.",
+    statement: "Un point focal est toujours géométriquement centré.",
+    correct: false,
+  };
+
+  it("accepte des exercices valides", () => {
+    const parsed = LessonFrontmatterSchema.parse({
+      ...validFrontmatter,
+      exercises: [exercise, { ...exercise, slug: "exo-2" }],
+    });
+    expect(parsed.exercises).toHaveLength(2);
+    expect(parsed.exercises[0]?.maxScore).toBe(100);
+  });
+
+  it("rejette deux exercices de même slug dans la même leçon", () => {
+    expect(
+      LessonFrontmatterSchema.safeParse({
+        ...validFrontmatter,
+        exercises: [exercise, exercise],
+      }).success,
     ).toBe(false);
   });
 });

@@ -1,16 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2 : identité, profil, onboarding, curriculum et leçons.
+// Périmètre M1+M2+M3 : identité, profil, onboarding, curriculum, leçons,
+// exercices notés, évaluations de fin de niveau et répétition espacée.
 // Le schéma complet est spécifié dans docs/04-modele-de-donnees.md ; il est
-// livré par module (M3 apporte le SRS, M4 l'atelier…).
+// livré par module (M4 apporte l'atelier, M5 la couche IA…).
 // On ne crée pas trente tables inutilisées : chaque migration accompagne la
 // fonctionnalité qui s'en sert, ce qui garde les migrations relisibles.
 //
-// M2 n'ajoute PAS Exercise/Card/Assessment/LevelProgress : la notation, les
-// cartes mémoire et le déverrouillage par évaluation sont M3. Un niveau reste
-// donc « déverrouillé » selon le seul diagnostic de M1 (packages/domain,
-// isLevelUnlocked) jusqu'à ce que M3 introduise un vrai critère de réussite.
+// M3 n'ajoute PAS XpEvent/Badge/UserBadge/StudySession : le crédit XP réel,
+// les séries et les badges sont M9 (gamification). `Lesson.xpReward` et
+// `Exercise.xpReward` existent déjà mais ne sont encore crédités nulle part.
+//
+// M3 n'implémente que 7 des 10 `ExerciseType` de docs/04 : LAYOUT dépend du
+// canevas de l'atelier (M4) et OPEN_CASE de la correction par IA (M5) — les
+// ajouter à l'enum sans code capable de les traiter serait une fonctionnalité
+// à moitié faite. CHALLENGE (défi hebdomadaire) est M9.
 // ─────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -56,6 +61,9 @@ model User {
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
   lessonProgress      LessonProgress[]
+  levelProgress       LevelProgress[]
+  submissions         Submission[]
+  cardReviews         CardReview[]
 
   @@index([deletedAt])
 }
@@ -166,13 +174,13 @@ enum Theme {
 /// Le jeton est stocké **haché** (SHA-256) : une fuite de la base ne permet
 /// donc pas de prendre la main sur un compte. Usage unique, expiration 1 h.
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokenHash String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@index([expiresAt])
@@ -196,12 +204,17 @@ model Level {
   phase            Int
   estimatedMinutes Int
   requiresLevel    Int?
-  /// Utilisé à partir de M3 (évaluation de fin de niveau) — la colonne existe
-  /// dès maintenant pour éviter une migration supplémentaire au module M3.
+  /// Recopié depuis `Assessment.passingScore` à la synchronisation, pour
+  /// afficher le seuil de réussite sur la carte de parcours sans jointure.
   passingScore     Int     @default(70)
   published        Boolean @default(true)
 
-  chapters Chapter[]
+  chapters      Chapter[]
+  /// Un seul fichier `_evaluation.yaml` par niveau (simplification M3 assumée
+  /// par rapport à docs/04, qui n'exclut pas plusieurs évaluations —
+  /// `levelId` est donc rendu unique ici, pas seulement indexé).
+  assessment    Assessment?
+  levelProgress LevelProgress[]
 
   @@index([phase, number])
 }
@@ -256,7 +269,9 @@ model Lesson {
   videoUrl  String?
   published Boolean @default(true)
 
-  progress LessonProgress[]
+  progress  LessonProgress[]
+  exercises Exercise[]
+  cards     Card[]
 
   @@unique([chapterId, number])
 }
@@ -274,19 +289,170 @@ model LessonProgress {
   lessonId String
   lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  status ProgressStatus @default(NOT_STARTED)
+  status      ProgressStatus @default(NOT_STARTED)
   /// Numéro du bloc le plus avancé que l'utilisateur a lu, jamais décroissant
   /// (voir features/learning/progress-actions.ts : le serveur applique un
   /// maximum avec la valeur existante, pour rester correct même si deux
   /// onglets envoient des mises à jour dans le désordre).
-  blockIndex Int @default(0)
+  blockIndex  Int            @default(0)
   /// Alimenté à partir de M9 (mesure par heartbeat, PROG-05). La colonne
   /// existe dès maintenant : aucune migration à prévoir quand M9 l'utilisera.
-  timeSpentMs Int @default(0)
+  timeSpentMs Int            @default(0)
 
   completedAt DateTime?
   updatedAt   DateTime  @updatedAt
 
   @@unique([userId, lessonId])
   @@index([userId, status])
+}
+
+// ── Exercices, évaluations et progression de niveau (M3) ──────────────────
+
+/// 7 des 10 types de docs/04 — voir la note de périmètre en tête de fichier.
+enum ExerciseType {
+  QUIZ_MCQ
+  QUIZ_TRUE_FALSE
+  QUIZ_MATCH
+  QUIZ_ORDER
+  HOTSPOT
+  PALETTE
+  MATERIAL_CHOICE
+}
+
+/// Un exercice est attaché à une leçon (pratique immédiate) OU à une
+/// évaluation de fin de niveau — jamais aux deux, jamais à aucune. Le script
+/// de synchronisation garantit cet invariant ; rien ne l'exprime en
+/// contrainte SQL (Prisma ne modélise pas les contraintes XOR).
+model Exercise {
+  id           String      @id @default(cuid())
+  lessonId     String?
+  lesson       Lesson?     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  /// Slug stable, clé d'upsert du script de synchronisation (ADR-0010) —
+  /// absent de docs/04, ajouté pour la même raison que `Lesson.contentHash`
+  /// en M2 : republier le même contenu ne doit jamais dupliquer une ligne.
+  slug     String
+  type     ExerciseType
+  prompt   String
+  /// Le reste du frontmatter validé par `ExerciseFrontmatterSchema`
+  /// (choices, correctIndices, zones… selon `type`), hors slug/type/prompt.
+  payload  Json
+  maxScore Int          @default(100)
+  xpReward Int          @default(10)
+  order    Int          @default(0)
+
+  submissions Submission[]
+
+  @@unique([lessonId, slug])
+  @@unique([assessmentId, slug])
+}
+
+model Submission {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  /// Réponse brute de l'utilisateur, dans la forme attendue par
+  /// `AnswerSchemas[exercise.type]` (packages/domain/src/exercises/grading.ts).
+  answer      Json
+  /// `score`/`correct` sont calculés côté serveur par `gradeExercise` — jamais
+  /// acceptés depuis le client (voir features/exercises/actions.ts).
+  score       Int
+  scoreRatio  Float
+  correct     Boolean
+  gradedBy    GradedBy @default(AUTO)
+  attempt     Int      @default(1)
+  timeSpentMs Int?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, exerciseId])
+}
+
+enum GradedBy {
+  AUTO
+  /// Pas encore émis : la correction IA (OPEN_CASE) arrive en M5.
+  AI
+}
+
+model Assessment {
+  id           String     @id @default(cuid())
+  levelId      String     @unique
+  level        Level      @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  title        String
+  passingScore Int        @default(70)
+  exercises    Exercise[]
+}
+
+model LevelProgress {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  levelId String
+  level   Level  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  unlockedAt  DateTime?
+  completedAt DateTime?
+  bestScore   Int?
+
+  @@unique([userId, levelId])
+}
+
+// ── Répétition espacée — FSRS-6 (M3, ADR-0007) ─────────────────────────────
+
+/// Générée automatiquement depuis le frontmatter d'une leçon (`cards:`) — il
+/// n'existe aucune autre façon d'en créer une, la leçon qui la justifie reste
+/// donc toujours la source de vérité (docs/05 M3).
+model Card {
+  id       String  @id @default(cuid())
+  lessonId String?
+  lesson   Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+
+  /// Clé d'upsert du script de synchronisation — absente de docs/04, même
+  /// raison que `Exercise.slug`.
+  slug  String  @unique
+  front String
+  back  String
+  hint  String?
+  /// Thème libre ("couleur", "eclairage"…), utilisé plus tard pour cibler les
+  /// points faibles d'un apprenant.
+  topic String
+
+  reviews CardReview[]
+
+  @@index([topic])
+}
+
+enum CardState {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+/// État FSRS-6 par (utilisateur, carte). Voir ADR-0007 et
+/// packages/domain/src/srs/fsrs.ts, qui calcule les transitions ci-dessous —
+/// ce modèle ne fait que persister leur résultat.
+model CardReview {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  stability    Float
+  difficulty   Float
+  dueAt        DateTime
+  lastReviewAt DateTime?
+  reps         Int       @default(0)
+  lapses       Int       @default(0)
+  state        CardState @default(NEW)
+  /// 1 À revoir · 2 Difficile · 3 Correct · 4 Facile
+  lastRating   Int?
+
+  @@unique([userId, cardId])
+  @@index([userId, dueAt]) // ← requête la plus fréquente de l'application (ADR-0007)
 }
