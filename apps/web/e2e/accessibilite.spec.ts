@@ -80,6 +80,17 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.goto("/revisions");
   await auditer(page, "révisions");
 
+  await page.goto("/atelier");
+  await auditer(page, "atelier — liste des projets");
+  await page.getByLabel("Nouveau projet").fill("Mon appartement");
+  await page.getByRole("button", { name: "Créer" }).click();
+  await page.waitForURL(/\/atelier\/[a-z0-9]+$/);
+  await auditer(page, "atelier — détail de projet");
+  await page.getByLabel("Nouvelle pièce").fill("Salon");
+  await page.getByRole("button", { name: "Créer" }).click();
+  await page.waitForURL(/\/atelier\/[a-z0-9]+\/[a-z0-9]+$/);
+  await auditer(page, "atelier — éditeur de pièce");
+
   await page.goto("/profil");
   await auditer(page, "profil");
 });

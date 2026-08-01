@@ -17,3 +17,4 @@ export * from "./curriculum/lesson-content";
 export * from "./curriculum/assessment";
 export * from "./exercises";
 export * from "./srs";
+export * from "./geometry";

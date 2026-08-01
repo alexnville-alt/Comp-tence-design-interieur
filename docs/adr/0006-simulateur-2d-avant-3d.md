@@ -68,3 +68,30 @@ La contrainte technique devient ici un objectif pédagogique.
 indépendantes du rendu : murs, ouvertures, empreintes, hauteurs. Un moteur 3D
 consommerait ces mêmes données. La 2D n'est pas un cul-de-sac, c'est la
 première vue d'un modèle qui en supportera plusieurs.
+
+## Addendum (M4) — comment le canevas devient accessible au clavier
+
+Un `<canvas>` (react-konva) est opaque pour un lecteur d'écran et pour la
+navigation `Tab` : la « accessibilité clavier » annoncée ci-dessus comme
+conséquence positive n'est pas un acquis du choix 2D, elle demande une
+structure dédiée. Concrètement (`apps/web/src/features/studio/`) :
+
+1. **Un arbre DOM parallèle** (`AccessibleSceneList`) liste chaque mur,
+   ouverture et meuble comme un `<button>` focalisable et décrit en toutes
+   lettres (« Mur, 400 cm », « Canapé 3 places, 220 × 95 cm, à 100 ; 100 cm »).
+   `Tab` y sélectionne l'objet dans le même store que le canevas — les deux
+   sont deux vues d'un seul état, jamais deux sources de vérité.
+2. **La création d'objets passe par une saisie numérique et des boutons**
+   (dimensions de pièce, catalogue de mobilier), pas par un tracé à la souris
+   — c'est ce qui rend « une pièce complète se construit entièrement au
+   clavier » vérifiable, pas seulement plausible.
+3. **Le placement d'une porte/fenêtre a exigé une seconde voie.** La première
+   implémentation ne permettait de poser une ouverture que par clic sur un mur
+   dans le canevas — trouvé en revue, avant la livraison du module : aucun
+   chemin clavier n'existait. Le correctif ajoute, dans `PropertyInspector`,
+   un bouton « Ajouter une porte/fenêtre » actif dès qu'un mur est sélectionné
+   (au clavier ou à la souris) : l'ouverture est posée centrée sur le mur, puis
+   ajustée par les mêmes champs numériques que ceux qui servent déjà à la
+   repositionner après un clic. `createOpeningOnWall`
+   (`features/studio/scene-utils.ts`) porte cette logique commune aux deux
+   chemins, pour qu'ils restent garantis identiques.

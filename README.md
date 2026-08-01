@@ -16,31 +16,33 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M0**      | Socle technique (monorepo, CI, tokens, Docker)                           | ✅ Livrée                                |
 | **M1**      | Authentification, onboarding, profil, RGPD                               | ✅ Livrée                                |
 | **M2**      | Moteur de leçons (MDX, 11 blocs, reprise exacte, carte de parcours)      | ✅ Livrée                                |
-| **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée — **en attente de validation** |
-| M4          | Atelier 2D                                                               | ⏸️ Bloquée par validation                |
-| M5 → M12    | Voir la feuille de route                                                 | ⏸️                                       |
+| **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée                                |
+| **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée — **en attente de validation** |
+| M5 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
-`feat(m0,m1)`, `feat(m2)`, `feat(m3)` sur la branche
+`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)` sur la branche
 `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M3** — 201 tests unitaires, 29 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 8 écrans/flux, en thème clair et sombre),
+**État à la fin de M4** — 266 tests unitaires, 33 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 11 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
 | Vérification                 | Commande            | Résultat                                  |
 | ---------------------------- | ------------------- | ----------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 201 ✅ (domaine 126 · tokens 33 · app 42) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 29 ✅                                     |
+| Tests unitaires              | `pnpm test`         | 266 ✅ (domaine 172 · tokens 33 · app 61) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 33 ✅                                     |
 | Types (5 paquets)            | `pnpm typecheck`    | ✅                                        |
 | Lint (5 paquets)             | `pnpm lint`         | ✅                                        |
 | Format                       | `pnpm format:check` | ✅                                        |
-| Build de production          | `pnpm build`        | ✅ 17 routes                              |
+| Build de production          | `pnpm build`        | ✅ 20 routes                              |
 
-Le paquet domaine (`packages/domain`) est à 100 % de couverture de lignes —
-FSRS-6 (`srs/`) et la correction d'exercices (`exercises/`) y sont testées
-sans base de données ni navigateur.
+Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
+lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`) et la
+géométrie de l'atelier (`geometry/` : collisions SAT, circulation par plus
+court chemin le plus large, dégagements) y sont testées sans base de données
+ni navigateur.
 
 ---
 
@@ -109,10 +111,24 @@ Lire dans cet ordre :
 - Répétition espacée FSRS-6 : file quotidienne (`/revisions`), carte
   retournable et notée entièrement au clavier
 
-**Hors périmètre pour l'instant** (modules à venir) : atelier 2D (M4),
-assistant IA (M5), analyse photo (M6), bibliothèque de matériaux/styles (M7),
-XP/séries/badges (M9) — les champs `xpReward` existent en base mais ne sont
-crédités nulle part avant M9.
+**Atelier 2D (M4)**
+
+- Dessiner une pièce (rectangulaire, cotée), poser portes/fenêtres, meubler
+  depuis un catalogue de 15 empreintes réalistes — création par saisie
+  numérique et boutons, pas seulement à la souris : une pièce complète se
+  construit **entièrement au clavier** (`/atelier`)
+- Alertes en continu : collisions (test d'axes séparateurs), dégagements
+  obstrués, largeur de passage entre portes (plus court chemin le plus large)
+- Versions de pièce : enregistrer, dupliquer, renommer, restaurer (toujours
+  un ajout, jamais une réécriture), comparateur avant/après au clavier
+- Arbre DOM parallèle au canevas (`AccessibleSceneList`) : chaque objet est
+  aussi un élément focalisable et décrit en toutes lettres pour un lecteur
+  d'écran
+
+**Hors périmètre pour l'instant** (modules à venir) : assistant IA (M5),
+analyse photo (M6), bibliothèque de matériaux/styles (M7), XP/séries/badges
+(M9) — les champs `xpReward` existent en base mais ne sont crédités nulle
+part avant M9.
 
 ## Démarrage
 

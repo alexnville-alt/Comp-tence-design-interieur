@@ -53,7 +53,7 @@ const NAV: NavItem[] = [
     href: "/atelier",
     label: "Atelier",
     icon: PencilRuler,
-    comingIn: "M4",
+    comingIn: null,
     mobile: false,
   },
   {
