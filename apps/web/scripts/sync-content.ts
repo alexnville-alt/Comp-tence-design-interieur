@@ -18,10 +18,15 @@ import { fileURLToPath } from "node:url";
 import { prisma } from "@atelier/db";
 import {
   LEVELS,
+  checkRelationSymmetry,
   type AnyExerciseFrontmatter,
   type CardFrontmatter,
+  type LibraryItemFrontmatter,
+  type RelationType,
 } from "@atelier/domain";
+import { aiProvider } from "../src/lib/ai/provider";
 import { ContentValidationError } from "../src/lib/content/frontmatter";
+import { scanLibrary } from "../src/lib/content/library-registry";
 import { scanContent } from "../src/lib/content/registry";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -88,6 +93,99 @@ async function upsertCard(card: CardFrontmatter, lessonId: string): Promise<void
       topic: card.topic,
     },
   });
+}
+
+const RELATION_FIELDS: { field: keyof LibraryItemFrontmatter; type: RelationType }[] = [
+  { field: "pairsWith", type: "PAIRS_WITH" },
+  { field: "avoidWith", type: "AVOID_WITH" },
+  { field: "cheaperAlt", type: "CHEAPER_ALT" },
+  { field: "premiumAlt", type: "PREMIUM_ALT" },
+  { field: "sameFamily", type: "SAME_FAMILY" },
+];
+
+/** Texte soumis à la recherche par similarité (M7, ADR-0013) — mêmes champs que la colonne `searchVector` générée par PostgreSQL (packages/db/prisma/schema.prisma), pour que les deux mécanismes de recherche portent sur le même contenu. */
+function embeddingTextOf(item: LibraryItemFrontmatter): string {
+  return [
+    item.name,
+    item.summary,
+    item.description,
+    ...item.pros,
+    ...item.cons,
+    ...item.mistakes,
+  ].join(" ");
+}
+
+/** Littéral pgvector (`[0.1,0.2,...]`) — Prisma ne sait pas écrire `Unsupported("vector(1024)")` directement. */
+function pgvectorLiteral(vector: number[]): string {
+  return `[${vector.join(",")}]`;
+}
+
+async function syncLibrary(contentRoot: string): Promise<number> {
+  const items = scanLibrary(contentRoot).map((entry) => entry.frontmatter);
+
+  const symmetryErrors = checkRelationSymmetry(items);
+  if (symmetryErrors.length > 0) {
+    throw new Error(
+      `Bibliothèque : relations incohérentes (docs/05 M7)\n${symmetryErrors.map((e) => `  • ${e}`).join("\n")}`,
+    );
+  }
+
+  const idBySlug = new Map<string, string>();
+  for (const item of items) {
+    const data = {
+      category: item.category,
+      name: item.name,
+      summary: item.summary,
+      description: item.description,
+      pros: item.pros,
+      cons: item.cons,
+      budgetTier: item.budgetTier,
+      budgetNote: item.budgetNote ?? null,
+      maintenance: item.maintenance,
+      mistakes: item.mistakes,
+      bestFor: item.bestFor,
+      styles: item.styles,
+      noWorksNeeded: item.noWorksNeeded,
+      attributes: item.attributes,
+    };
+    const dbItem = await prisma.libraryItem.upsert({
+      where: { slug: item.slug },
+      update: data,
+      create: { ...data, slug: item.slug },
+    });
+    idBySlug.set(item.slug, dbItem.id);
+  }
+
+  for (const item of items) {
+    const fromId = idBySlug.get(item.slug)!;
+    for (const { field, type } of RELATION_FIELDS) {
+      for (const targetSlug of item[field] as string[]) {
+        const toId = idBySlug.get(targetSlug)!;
+        await prisma.libraryRelation.upsert({
+          where: { fromId_toId_type: { fromId, toId, type } },
+          update: {},
+          create: { fromId, toId, type },
+        });
+      }
+    }
+  }
+
+  // Un seul appel groupé plutôt qu'un par fiche : c'est l'unité de facturation
+  // naturelle de l'API Voyage (ADR-0013), et l'adaptateur factice (dev, CI)
+  // n'a de toute façon aucun coût réseau à amortir.
+  if (items.length > 0) {
+    const { embeddings } = await aiProvider.embed({
+      texts: items.map(embeddingTextOf),
+      inputType: "document",
+    });
+    for (const [index, item] of items.entries()) {
+      const id = idBySlug.get(item.slug)!;
+      const vector = pgvectorLiteral(embeddings[index]!);
+      await prisma.$executeRaw`UPDATE "LibraryItem" SET embedding = ${vector}::vector WHERE id = ${id}`;
+    }
+  }
+
+  return items.length;
 }
 
 async function main() {
@@ -207,10 +305,12 @@ async function main() {
     }
   }
 
+  const libraryItemCount = await syncLibrary(contentRoot);
+
   console.warn(
     `✓ Contenu synchronisé : ${registry.levels.length} niveaux, ${chapterCount} chapitres, ` +
       `${lessonCount} leçons, ${exerciseCount} exercices, ${cardCount} cartes, ` +
-      `${assessmentCount} évaluations.`,
+      `${assessmentCount} évaluations, ${libraryItemCount} fiches bibliothèque.`,
   );
 }
 

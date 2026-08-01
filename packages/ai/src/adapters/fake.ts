@@ -4,6 +4,8 @@ import type {
   AiUsageTokens,
   ChatInput,
   ChatMessage,
+  EmbedInput,
+  EmbedResult,
   StructuredInput,
   VisionInput,
 } from "../port";
@@ -62,6 +64,43 @@ function fakeStructuredResult<T>(
   return { data, usage, costEuros: costFor(usage), model: MODEL };
 }
 
+const EMBEDDING_DIMENSION = 1024; // aligné sur adapters/voyage.ts (ADR-0013)
+
+/** FNV-1a 32 bits — hachage stable, aucune dépendance. */
+function hashString(text: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/** PRNG mulberry32 — déterministe à partir d'une graine 32 bits. */
+function mulberry32(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Vecteur déterministe dérivé d'un hachage du texte (ADR-0013) : même entrée
+ * → même vecteur, entrées différentes → vecteurs différents. Suffisant pour
+ * tester le mécanisme de bout en bout (stockage, tri par distance cosinus) —
+ * pas la pertinence sémantique, qu'aucun hachage ne peut simuler.
+ */
+function fakeEmbedding(text: string): number[] {
+  const random = mulberry32(hashString(text));
+  const raw = Array.from({ length: EMBEDDING_DIMENSION }, () => random() * 2 - 1);
+  const norm = Math.sqrt(raw.reduce((sum, v) => sum + v * v, 0));
+  return raw.map((v) => v / norm);
+}
+
 export const fakeAiProvider: AiProvider = {
   async *streamChat({ system, messages }: ChatInput) {
     const question = lastUserMessage(messages);
@@ -92,5 +131,14 @@ export const fakeAiProvider: AiProvider = {
     const inputChars =
       inputCharsOf(input.system, input.messages ?? []) + input.images.length * 1_500 * 4;
     return Promise.resolve(fakeStructuredResult(input.schema, inputChars));
+  },
+
+  embed(input: EmbedInput): Promise<EmbedResult> {
+    const embeddings = input.texts.map(fakeEmbedding);
+    const usage = usageFor(
+      input.texts.reduce((total, text) => total + text.length, 0),
+      0,
+    );
+    return Promise.resolve({ embeddings, usage, costEuros: 0, model: MODEL });
   },
 };

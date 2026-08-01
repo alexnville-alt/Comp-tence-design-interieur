@@ -8,10 +8,13 @@ import {
   type AiUsageTokens,
   type ChatInput,
   type ChatMessage,
+  type EmbedInput,
+  type EmbedResult,
   type StructuredInput,
   type VisionImage,
   type VisionInput,
 } from "../port";
+import { embedWithVoyage } from "./voyage";
 import { zodToJsonSchema } from "./zod-json-schema";
 
 /**
@@ -206,5 +209,9 @@ export const anthropicProvider: AiProvider = {
   async analyzeImage<T>(input: VisionInput<T>): Promise<AiResult<T>> {
     const messages = withImages(toAnthropicMessages(input.messages ?? []), input.images);
     return runStructured(input.system, messages, input.schema, input.effort ?? "high");
+  },
+
+  embed(input: EmbedInput): Promise<EmbedResult> {
+    return embedWithVoyage(input);
   },
 };

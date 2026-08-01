@@ -20,3 +20,4 @@ export * from "./srs";
 export * from "./geometry";
 export * from "./ai/guardrails";
 export * from "./ai/photo-analysis";
+export * from "./library";

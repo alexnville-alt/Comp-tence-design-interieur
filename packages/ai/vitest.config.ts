@@ -17,6 +17,9 @@ export default defineConfig({
         "src/index.ts",
         "src/**/index.ts",
         "src/adapters/anthropic.ts",
+        // Même principe : appelle une API externe réelle (Voyage AI),
+        // jamais exercé en CI (ADR-0011, ADR-0013).
+        "src/adapters/voyage.ts",
       ],
       thresholds: { statements: 90, branches: 85, functions: 90, lines: 90 },
     },

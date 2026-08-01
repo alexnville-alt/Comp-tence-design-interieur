@@ -61,7 +61,7 @@ const NAV: NavItem[] = [
     href: "/bibliotheque",
     label: "Bibliothèque",
     icon: Library,
-    comingIn: "M7",
+    comingIn: null,
     mobile: true,
   },
   { href: "/projets", label: "Projets", icon: Home, comingIn: "M10", mobile: false },

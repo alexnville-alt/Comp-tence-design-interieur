@@ -64,7 +64,8 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        # pgvector (M7, ADR-0013) — voir docker/compose.yml pour le détail.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_DB: atelier
           POSTGRES_USER: atelier

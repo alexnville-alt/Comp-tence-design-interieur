@@ -1,5 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { checkRelationSymmetry, LIB_CATEGORIES } from "@atelier/domain";
+import { scanLibrary } from "./library-registry";
 import { scanContent } from "./registry";
 
 /**
@@ -27,5 +29,26 @@ describe("scanContent — contenu réel", () => {
       "apprendre-a-observer",
       "les-dix-erreurs-qui-ruinent-une-piece",
     ]);
+  });
+});
+
+describe("scanLibrary — contenu réel", () => {
+  it("le contenu publié est valide", () => {
+    expect(() => scanLibrary(CONTENT_ROOT)).not.toThrow();
+  });
+
+  it("les relations déclarées sont bidirectionnellement cohérentes (docs/05 M7)", () => {
+    const items = scanLibrary(CONTENT_ROOT).map((entry) => entry.frontmatter);
+    expect(checkRelationSymmetry(items)).toEqual([]);
+  });
+
+  it("chaque catégorie a au moins une fiche publiée", () => {
+    const items = scanLibrary(CONTENT_ROOT).map((entry) => entry.frontmatter);
+    const categoriesPresent = new Set(items.map((i) => i.category));
+    for (const category of LIB_CATEGORIES) {
+      expect(categoriesPresent.has(category), `catégorie manquante : ${category}`).toBe(
+        true,
+      );
+    }
   });
 });

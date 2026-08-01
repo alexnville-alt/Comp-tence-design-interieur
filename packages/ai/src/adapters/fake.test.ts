@@ -98,3 +98,44 @@ describe("fakeAiProvider.analyzeImage", () => {
     expect(threeImages.usage.inputTokens).toBeGreaterThan(oneImage.usage.inputTokens);
   });
 });
+
+describe("fakeAiProvider.embed", () => {
+  it("est déterministe : le même texte produit exactement le même vecteur", async () => {
+    const first = await fakeAiProvider.embed({
+      texts: ["Chêne huilé"],
+      inputType: "document",
+    });
+    const second = await fakeAiProvider.embed({
+      texts: ["Chêne huilé"],
+      inputType: "document",
+    });
+    expect(second.embeddings[0]).toEqual(first.embeddings[0]);
+  });
+
+  it("produit un vecteur unitaire de dimension 1024", async () => {
+    const { embeddings } = await fakeAiProvider.embed({
+      texts: ["Béton ciré"],
+      inputType: "document",
+    });
+    const vector = embeddings[0]!;
+    expect(vector).toHaveLength(1024);
+    const norm = Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
+    expect(norm).toBeCloseTo(1, 5);
+  });
+
+  it("des textes différents produisent des vecteurs différents", async () => {
+    const { embeddings } = await fakeAiProvider.embed({
+      texts: ["Chêne huilé", "Béton ciré"],
+      inputType: "document",
+    });
+    expect(embeddings[0]).not.toEqual(embeddings[1]);
+  });
+
+  it("coûte zéro (pas d'appel réseau)", async () => {
+    const result = await fakeAiProvider.embed({
+      texts: ["Chêne huilé"],
+      inputType: "query",
+    });
+    expect(result.costEuros).toBe(0);
+  });
+});

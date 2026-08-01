@@ -2,7 +2,12 @@ name: atelier
 
 services:
   db:
-    image: postgres:16-alpine
+    # `pgvector/pgvector:pg16` : image officielle Postgres 16 + extension
+    # `vector` pré-compilée (M7, ADR-0013) — nécessaire à l'index de
+    # similarité de la bibliothèque (RAG, docs/02 §5.5). Compatible en tous
+    # points avec `postgres:16-alpine` pour le reste (mêmes variables
+    # d'environnement, mêmes ports) : seule l'image change.
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_DB: atelier
       POSTGRES_USER: atelier

@@ -1,13 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2+M3+M4+M5+M6 : identité, profil, onboarding, curriculum,
+// Périmètre M1+M2+M3+M4+M5+M6+M7 : identité, profil, onboarding, curriculum,
 // leçons, exercices notés, évaluations de fin de niveau, répétition espacée,
-// atelier 2D, couche IA et analyse photo. Le schéma complet est spécifié dans
-// docs/04-modele-de-donnees.md ; il est livré par module (M7 apporte la
-// bibliothèque…). On ne crée pas trente tables inutilisées : chaque migration
-// accompagne la fonctionnalité qui s'en sert, ce qui garde les migrations
-// relisibles.
+// atelier 2D, couche IA, analyse photo et bibliothèque. Le schéma complet est
+// spécifié dans docs/04-modele-de-donnees.md ; il est livré par module. On ne
+// crée pas trente tables inutilisées : chaque migration accompagne la
+// fonctionnalité qui s'en sert, ce qui garde les migrations relisibles.
 //
 // M3 n'ajoute PAS XpEvent/Badge/UserBadge/StudySession : le crédit XP réel,
 // les séries et les badges sont M9 (gamification). `Lesson.xpReward` et
@@ -27,16 +26,27 @@
 // existe depuis M6, mais seulement pour les photos téléversées à analyser —
 // générer et stocker un aperçu de scène reste un besoin distinct, non traité.
 // `JournalEntry` et `Moodboard` restent hors périmètre (M8, M10).
+//
+// M7 ajoute `LibraryItem`/`LibraryRelation`/`Favorite` (bibliothèque). Deux
+// écarts documentés dans le rapport de livraison : `imageAssetId` (docs/04
+// §3.8) n'est pas encore rempli — aucune fiche de ce module n'a d'image
+// associée, faute de pipeline de génération/curation visuelle en périmètre
+// M7 ; `vector(1536)` de docs/04 devient `vector(1024)` (ADR-0013, choix du
+// fournisseur d'embeddings fait après l'écriture de docs/04).
 // ─────────────────────────────────────────────────────────────────────────
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["relationJoins"]
+  previewFeatures = ["relationJoins", "postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  // pgvector (M7, ADR-0013) — géré par Prisma comme le reste du schéma
+  // plutôt qu'un script SQL séparé, pour que la migration reste rejouable
+  // avec les mêmes outils que tout le reste (`prisma migrate deploy`).
+  extensions = [vector]
 }
 
 // ── Identité ─────────────────────────────────────────────────────────────
@@ -79,6 +89,7 @@ model User {
   conversations       AiConversation[]
   aiUsage             AiUsage[]
   assets              Asset[]
+  favorites           Favorite[]
 
   @@index([deletedAt])
 }
@@ -708,4 +719,133 @@ model PhotoAnalysis {
 
   @@index([assetId, createdAt])
   @@index([roomId, createdAt])
+}
+
+// ── Bibliothèque (M7, docs/04 §3.8, ADR-0013) ──────────────────────────────
+
+/// Une table, un discriminant `category`, des attributs typés en JSONB
+/// (docs/04 §1.3) : les champs communs — description, avantages,
+/// inconvénients, budget, entretien — portent l'essentiel de la valeur
+/// pédagogique et sont en colonnes réelles (filtrables) ; le spécifique à la
+/// catégorie (dureté d'un bois, lumens d'un luminaire) va en JSONB, validé
+/// par `LibraryItemFrontmatterSchema` (`@atelier/domain`) à la
+/// synchronisation, jamais par une contrainte de base.
+model LibraryItem {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  category    LibCategory
+  name        String
+  summary     String
+
+  description   String
+  pros          String[]
+  cons          String[]
+  budgetTier    BudgetTier
+  /// Toujours formulé en « ordre de grandeur » — jamais un prix ferme.
+  budgetNote    String?
+  maintenance   String
+  mistakes      String[]
+  bestFor       RoomType[]
+  /// Slugs de `LibraryItem` de catégorie STYLE — pas de clé étrangère : une
+  /// fiche peut citer un style avant qu'il ne soit synchronisé dans le même
+  /// lot (`content:sync` valide l'existence après coup, comme les relations).
+  styles        String[]
+  noWorksNeeded Boolean     @default(false)
+
+  attributes Json
+
+  /// Rempli par un pipeline de génération/curation visuelle qui n'existe pas
+  /// encore (docs/04 §3.8) : aucune fiche M7 n'en a. `imageAssetId` référence
+  /// un `Asset`, pas une URL — même principe de confidentialité qu'ADR-0008.
+  imageAssetId String?
+
+  /// Recherche plein texte française (docs/05 M7). Colonne générée par
+  /// PostgreSQL (`GENERATED ALWAYS AS`, voir la migration) à partir de
+  /// `name`/`summary`/`description`/`pros`/`cons`/`mistakes` — jamais écrite
+  /// par Prisma ni par l'application, donc toujours synchronisée avec les
+  /// champs source.
+  searchVector Unsupported("tsvector")?
+
+  /// Ancrage documentaire (RAG, docs/02 §5.5, ADR-0013). `vector(1024)` —
+  /// Voyage AI `voyage-3.5`, pas 1536 (docs/04 §3.8 était antérieur au choix
+  /// du fournisseur). Calculé et écrit par `content:sync` via `$executeRaw`
+  /// (Prisma ne sait pas écrire un type `Unsupported`).
+  embedding Unsupported("vector(1024)")?
+
+  relationsFrom  LibraryRelation[] @relation("from")
+  relationsTo    LibraryRelation[] @relation("to")
+  favorites      Favorite[]
+
+  @@index([category])
+  @@index([budgetTier])
+}
+
+enum LibCategory {
+  STYLE
+  MATERIAL
+  COLOR
+  WOOD
+  STONE
+  FLOORING
+  WALL_COVERING
+  LIGHTING
+  SOFA
+  TABLE
+  CHAIR
+  STORAGE
+  KITCHEN
+  BATHROOM
+  STAIRCASE
+  TEXTILE
+  PLANT
+  ACCESSORY
+}
+
+enum BudgetTier {
+  ECONOMY
+  MID
+  PREMIUM
+  LUXURY
+}
+
+/// LIB-04 — le graphe d'associations est ce qui rend la bibliothèque utile :
+/// il permet à l'IA de justifier « ce carrelage s'accorde avec ce bois ».
+/// Déclarées par slug dans le frontmatter de la fiche source
+/// (`packages/domain/src/library/schema.ts`) ; cohérence bidirectionnelle
+/// vérifiée à la synchronisation (`checkRelationSymmetry`), pas en base —
+/// une réciproque manquante est une erreur de contenu, détectée avant que la
+/// donnée n'existe, pas après.
+model LibraryRelation {
+  id     String       @id @default(cuid())
+  fromId String
+  from   LibraryItem  @relation("from", fields: [fromId], references: [id], onDelete: Cascade)
+  toId   String
+  to     LibraryItem  @relation("to", fields: [toId], references: [id], onDelete: Cascade)
+  type   RelationType
+  note   String?
+
+  @@unique([fromId, toId, type])
+}
+
+enum RelationType {
+  PAIRS_WITH
+  AVOID_WITH
+  CHEAPER_ALT
+  PREMIUM_ALT
+  SAME_FAMILY
+}
+
+model Favorite {
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       LibraryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  /// « default » si l'utilisateur ne crée jamais de collection nommée — la
+  /// fonctionnalité « collections » n'impose donc rien à qui veut juste un
+  /// bouton « favori » simple (docs/05 M7).
+  collection String      @default("default")
+  createdAt  DateTime    @default(now())
+
+  @@id([userId, itemId, collection])
+  @@index([userId, collection])
 }

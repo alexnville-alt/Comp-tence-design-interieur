@@ -53,6 +53,10 @@ const schema = z
 
     AI_PROVIDER: z.enum(["fake", "anthropic"]).default("fake"),
     ANTHROPIC_API_KEY: z.string().optional(),
+    // Embeddings de la bibliothèque (M7, ADR-0013) — fournisseur distinct
+    // d'Anthropic (qui n'a pas d'API d'embeddings), même principe de
+    // validation que ANTHROPIC_API_KEY.
+    VOYAGE_API_KEY: z.string().optional(),
 
     // Stockage objet S3-compatible (ADR-0008, M6) : MinIO en développement,
     // Cloudflare R2 en production. Aucune valeur par défaut — contrairement à
@@ -77,6 +81,10 @@ const schema = z
   .refine(
     (env) => env.AI_PROVIDER !== "anthropic" || Boolean(env.ANTHROPIC_API_KEY),
     "ANTHROPIC_API_KEY est requis lorsque AI_PROVIDER vaut « anthropic ».",
+  )
+  .refine(
+    (env) => env.AI_PROVIDER !== "anthropic" || Boolean(env.VOYAGE_API_KEY),
+    "VOYAGE_API_KEY est requis lorsque AI_PROVIDER vaut « anthropic » (embeddings, ADR-0013).",
   );
 
 export type Env = z.infer<typeof schema>;

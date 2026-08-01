@@ -114,3 +114,24 @@ sans une vérification dédiée équivalente.
 Le script de synchronisation refuse tout `.mdx` mal numéroté avec un message
 qui identifie le bloc fautif et la correction attendue — le coût se paie à
 l'écriture, jamais à l'exécution.
+
+## Addendum (M7) — un piège YAML invisible à la relecture
+
+En rédigeant les 54 fiches de la bibliothèque, plusieurs listes de
+frontmatter (`pros`, `cons`, `mistakes`) ont échoué à la synchronisation avec
+`Expected string, received object` — alors que le fichier, relu, semblait
+parfaitement correct. Cause : une phrase comme `- Empilable : gain de place…`
+contient un deux-points précédé et suivi d'un espace, que le parseur YAML
+(`gray-matter`) interprète comme une paire clé/valeur imbriquée plutôt que
+comme une chaîne — l'élément de liste devient silencieusement un objet
+`{Empilable: "gain de place…"}` au lieu du texte attendu.
+
+C'est un piège spécifiquement français : la typographie française impose une
+espace avant le deux-points (« mot : texte »), exactement le motif qui
+déclenche l'ambiguïté YAML. Corrigé au cas par cas en entourant de guillemets
+les chaînes concernées (`"Empilable : gain de place…"`) plutôt qu'en
+supprimant l'espace, pour ne pas sacrifier la typographie correcte. Aucune
+validation automatique ne l'empêche à l'avenir — c'est le comportement de
+YAML, pas un bug applicatif — donc un futur auteur peut retomber dans le même
+piège ; seul un message d'erreur Zod explicite (`ContentValidationError`,
+`frontmatter.ts`) le révèle, au moment de la synchronisation.

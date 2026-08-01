@@ -27,3 +27,4 @@ un nouveau qui le remplace (`Remplace ADR-XXXX`).
 | [0010](0010-contenu-mdx-versionne.md)        | Contenu pédagogique en MDX versionné            | Accepté                                 |
 | [0011](0011-strategie-de-tests.md)           | Stratégie de tests et simulation de l'IA        | Accepté                                 |
 | [0012](0012-sessions-jwt-avec-revocation.md) | Sessions JWT avec compteur de révocation        | Accepté — amende [0004](0004-authjs.md) |
+| [0013](0013-embeddings-voyage-ai.md)         | Embeddings Voyage AI, indexés par pgvector      | Accepté                                 |

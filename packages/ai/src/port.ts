@@ -75,6 +75,22 @@ export interface AiResult<T> {
   model: string;
 }
 
+/** `document` pour indexer une fiche, `query` pour une recherche — Voyage AI optimise l'un et l'autre différemment (ADR-0013). */
+export type EmbeddingInputType = "document" | "query";
+
+export interface EmbedInput {
+  texts: string[];
+  inputType: EmbeddingInputType;
+}
+
+export interface EmbedResult {
+  /** Un vecteur par entrée de `texts`, dans le même ordre. */
+  embeddings: number[][];
+  usage: AiUsageTokens;
+  costEuros: number;
+  model: string;
+}
+
 export interface AiProvider {
   /** Chat en streaming — retourne un flux de fragments de texte. */
   streamChat(input: ChatInput): AsyncIterable<ChatChunk>;
@@ -84,6 +100,9 @@ export interface AiProvider {
 
   /** Analyse d'image (le port ne connaît que des images, pas un fournisseur). */
   analyzeImage<T>(input: VisionInput<T>): Promise<AiResult<T>>;
+
+  /** Vecteurs de similarité sémantique (M7, ADR-0013) — indexation et recherche de la bibliothèque. */
+  embed(input: EmbedInput): Promise<EmbedResult>;
 }
 
 /** Erreur levée quand la réponse du fournisseur ne valide pas le schéma attendu, même après une reprise (docs/02 §5.4, niveau 3). */

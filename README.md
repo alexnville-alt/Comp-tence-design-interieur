@@ -19,26 +19,27 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée                                |
 | **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée                                |
 | **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée                                |
-| **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée — **en attente de validation** |
-| M7 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée                                |
+| **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée — **en attente de validation** |
+| M8 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
-`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)` sur
-la branche `claude/interior-design-learning-platform-bam6l6`.
+`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`,
+`feat(m7)` sur la branche `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M6** — 396 tests unitaires, 40 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 15 écrans/flux, en thème clair et sombre),
+**État à la fin de M7** — 427 tests unitaires, 41 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 18 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
-| Vérification                 | Commande            | Résultat                                      |
-| ---------------------------- | ------------------- | --------------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 396 ✅ (domaine 216 · IA 55 · app 92 · ui 33) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 40 ✅                                         |
-| Types (6 paquets)            | `pnpm typecheck`    | ✅                                            |
-| Lint (6 paquets)             | `pnpm lint`         | ✅                                            |
-| Format                       | `pnpm format:check` | ✅                                            |
-| Build de production          | `pnpm build`        | ✅ 22 routes                                  |
+| Vérification                 | Commande            | Résultat                                       |
+| ---------------------------- | ------------------- | ---------------------------------------------- |
+| Tests unitaires              | `pnpm test`         | 427 ✅ (domaine 228 · IA 60 · app 106 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 41 ✅                                          |
+| Types (6 paquets)            | `pnpm typecheck`    | ✅                                             |
+| Lint (6 paquets)             | `pnpm lint`         | ✅                                             |
+| Format                       | `pnpm format:check` | ✅                                             |
+| Build de production          | `pnpm build`        | ✅ 27 routes                                   |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
 lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
@@ -82,6 +83,7 @@ Lire dans cet ordre :
 | Stockage fichiers   | S3-compatible (Cloudflare R2) + URL présignées         | [ADR-0008](docs/adr/0008-stockage-objet-s3.md)         |
 | Monorepo            | pnpm workspaces + Turborepo                            | [ADR-0009](docs/adr/0009-monorepo-pnpm-turborepo.md)   |
 | Contenu pédagogique | MDX versionné dans Git + frontmatter Zod               | [ADR-0010](docs/adr/0010-contenu-mdx-versionne.md)     |
+| Embeddings          | Voyage AI `voyage-3.5` + `pgvector` (RAG)              | [ADR-0013](docs/adr/0013-embeddings-voyage-ai.md)      |
 
 ---
 
@@ -167,11 +169,39 @@ Lire dans cet ordre :
 - Historique des analyses par pièce et passerelle « ouvrir dans l'atelier »
   vers la pièce correspondante, quand elle existe encore
 
-**Hors périmètre pour l'instant** (modules à venir) : ancrage documentaire du
-chat sur la bibliothèque — RAG (dépend de `LibraryItem`, M7), bibliothèque de
-matériaux/styles (M7), import de plan (`ProjectAsset`, M10),
-XP/séries/badges (M9) — les champs `xpReward` existent en base mais ne sont
-crédités nulle part avant M9.
+**Bibliothèque (M7)**
+
+- 54 fiches réelles couvrant les 18 catégories (docs/04 §3.8), chacune avec
+  description, avantages, inconvénients, budget, entretien, erreurs à éviter
+  et attributs spécifiques à sa catégorie — corpus volontairement réduit par
+  rapport à la cible de la feuille de route (≥ 300), signalé explicitement
+  ci-dessous
+- Recherche plein texte française (`tsvector` généré par PostgreSQL, index
+  GIN) combinée à des facettes (catégorie, budget, pièce, « sans travaux »)
+- Graphe de relations (s'associe / à éviter / alternative moins chère ou plus
+  haut de gamme / même famille), cohérence bidirectionnelle vérifiée à la
+  synchronisation du contenu — une réciproque manquante fait échouer
+  `content:sync`, pas une recherche silencieusement incomplète
+- Favoris par fiche, par collection
+- Indexation vectorielle (`pgvector`, embeddings Voyage AI, ADR-0013) prête
+  pour l'ancrage documentaire du chat IA — le calcul se fait à la
+  synchronisation du contenu, pas à la requête
+
+**Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
+au sein de M7) :
+
+- **Corpus bibliothèque incomplet** : 54 fiches contre ≥ 300 visées par
+  docs/05 M7 — le pipeline (schéma, recherche, facettes, relations,
+  embeddings) est complet et testé à l'échelle visée (recherche vérifiée
+  < 150 ms sur 300 fiches via un complément synthétique non commité), mais la
+  rédaction du corpus complet reste un travail de contenu à poursuivre,
+  comparable à ce que M11 fait pour les leçons
+- **Ancrage documentaire (RAG) du chat** : l'index vectoriel existe et est
+  interrogeable, mais n'est pas encore branché sur le prompt système du chat
+  IA (M5) — une extension distincte, pas incluse dans les tâches listées pour
+  M7 dans docs/05
+- Import de plan (`ProjectAsset`, M10), XP/séries/badges (M9) — les champs
+  `xpReward` existent en base mais ne sont crédités nulle part avant M9
 
 ## Démarrage
 

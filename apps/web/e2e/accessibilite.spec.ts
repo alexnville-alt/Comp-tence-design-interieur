@@ -105,6 +105,19 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.waitForURL(/\/photos\/[a-z0-9]+$/, { timeout: 30_000 });
   await auditer(page, "atelier — analyse photo");
 
+  await page.goto("/bibliotheque");
+  await auditer(page, "bibliothèque — recherche");
+  await page.getByLabel("Rechercher").fill("chêne");
+  await page.getByRole("button", { name: "Rechercher" }).click();
+  await auditer(page, "bibliothèque — résultats de recherche");
+
+  await page.getByRole("link", { name: /Chêne huilé/ }).click();
+  await page.waitForURL(/\/bibliotheque\/chene-huile$/);
+  await auditer(page, "bibliothèque — fiche détail");
+
+  await page.goto("/bibliotheque/favoris");
+  await auditer(page, "bibliothèque — favoris");
+
   await page.goto("/profil");
   await auditer(page, "profil");
 });

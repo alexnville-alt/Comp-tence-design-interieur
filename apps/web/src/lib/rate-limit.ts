@@ -97,11 +97,16 @@ export function __resetAllRateLimits(): void {
  *
  * Le même raisonnement vaut pour l'inscription : on veut arrêter la création
  * automatisée de milliers de comptes, pas la famille qui s'inscrit à trois
- * depuis la même connexion.
+ * depuis la même connexion — ni la suite E2E, qui partage la même IP et le
+ * même processus serveur sur toute son exécution (`fullyParallel: false`,
+ * `workers: 1`) et crée un compte par fichier de test. 60/heure reste bien
+ * en dessous de tout rythme d'automatisation malveillante réaliste tout en
+ * laissant de la marge à mesure que la suite grandit (M7 : 31 comptes sur
+ * une exécution complète, contre 30 pour M6).
  */
 export const RATE_LIMITS = {
   loginPerEmail: { limit: 8, windowMs: 15 * 60 * 1000 },
   loginPerIp: { limit: 40, windowMs: 15 * 60 * 1000 },
-  signup: { limit: 30, windowMs: 60 * 60 * 1000 },
+  signup: { limit: 60, windowMs: 60 * 60 * 1000 },
   passwordReset: { limit: 10, windowMs: 60 * 60 * 1000 },
 } as const;

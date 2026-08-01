@@ -74,4 +74,15 @@ describe.each(providers)("AiProvider — $name", ({ provider }) => {
     });
     expect(() => schema.parse(result.data)).not.toThrow();
   }, 30_000);
+
+  it("embed() retourne un vecteur distinct par texte, dans le même ordre", async () => {
+    const result = await provider.embed({
+      texts: ["Chêne huilé", "Béton ciré"],
+      inputType: "document",
+    });
+    expect(result.embeddings).toHaveLength(2);
+    expect(result.embeddings[0]).not.toEqual(result.embeddings[1]);
+    expect(result.model).toBeTruthy();
+    expect(result.costEuros).toBeGreaterThanOrEqual(0);
+  }, 30_000);
 });

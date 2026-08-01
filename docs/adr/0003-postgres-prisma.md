@@ -57,3 +57,31 @@ dépasse 100 000 lignes.
 **Élevée pour PostgreSQL** (standard, portable), **moyenne pour Prisma** :
 migrer vers Drizzle demanderait de réécrire la couche d'accès, mais le schéma
 SQL et les données resteraient intacts.
+
+## Addendum (M7) — une colonne générée, pas juste `tsvector`
+
+`LibraryItem.searchVector` (docs/04 §3.8) devait rester synchronisée avec
+`name`/`summary`/`description`/`pros`/`cons`/`mistakes` sans jamais dépendre
+de l'application pour la maintenir à jour — un champ oublié dans une future
+Server Action de modification de fiche produirait sinon une recherche
+silencieusement désynchronisée du contenu réel. Solution : une colonne
+**générée** PostgreSQL (`GENERATED ALWAYS AS (...) STORED`), calculée par la
+base elle-même à chaque écriture.
+
+Obstacle trouvé en écrivant la migration, pas prévisible depuis le schéma
+Prisma : une colonne générée exige une expression **IMMUTABLE**, et
+`to_tsvector('french', …)` n'est que **STABLE** (le nom de configuration est
+résolu via le catalogue système, donc théoriquement variable). PostgreSQL
+refuse la migration avec `generation expression is not immutable`. Corrigé en
+enveloppant l'appel dans une fonction SQL déclarée `IMMUTABLE`
+(`library_item_search_vector`, dans la migration
+`20260801193309_m7_bibliotheque`) — l'engagement de stabilité est vrai en
+pratique ici (la configuration `'french'` est une constante du projet), donc
+défendable, mais c'est PostgreSQL qui l'exige explicitement, pas une
+formalité gratuite.
+
+Prisma ne modélise ni les colonnes générées ni les index `GIN`/`HNSW` dans son
+DSL : `schema.prisma` déclare `searchVector`/`embedding` en
+`Unsupported(...)`, et la définition réelle (fonction, génération, index) vit
+entièrement dans le SQL de migration, écrit et relu à la main plutôt que
+généré par `prisma migrate dev`.
