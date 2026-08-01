@@ -19,6 +19,29 @@ function placeholderString(path: string): string {
   return path ? `donnée factice — ${path}` : "donnée factice";
 }
 
+/**
+ * `.regex()` est un motif ouvert — générer une chaîne qui satisfait un motif
+ * arbitraire n'est pas résolu en général. Plutôt qu'un générateur de chaînes
+ * complet (hors de proportion pour ce dont les schémas IA du monorepo ont
+ * réellement besoin), on essaie une poignée de candidats déterministes et on
+ * prend le premier qui valide — couvre la couleur hexadécimale (seul motif
+ * rencontré dans un schéma passé à `complete()`, M8) sans coder ce cas en dur
+ * dans le `switch` principal. Erreur explicite si aucun candidat ne convient,
+ * même principe que le `default` de `generateFakeValue` ci-dessous.
+ */
+function valueForRegex(regex: RegExp, path: string): string {
+  const seed = Math.abs(hashCode(path || "regex"))
+    .toString(16)
+    .padStart(6, "0")
+    .slice(0, 6);
+  const candidates = [`#${seed}`, seed, placeholderString(path), "0", "a"];
+  const match = candidates.find((candidate) => regex.test(candidate));
+  if (match !== undefined) return match;
+  throw new Error(
+    `adaptateur factice IA : aucune chaîne factice ne satisfait le motif ${regex} (${path || "racine"}) — élargir valueForRegex.`,
+  );
+}
+
 function stringFor(schema: z.ZodString, path: string): string {
   const checks = schema._def.checks;
   const kinds = new Set(checks.map((c) => c.kind));
@@ -29,6 +52,10 @@ function stringFor(schema: z.ZodString, path: string): string {
       "000000",
       Math.abs(hashCode(path)).toString(16).padStart(6, "0").slice(0, 6),
     );
+  const regexCheck = checks.find(
+    (c): c is Extract<(typeof checks)[number], { kind: "regex" }> => c.kind === "regex",
+  );
+  if (regexCheck) return valueForRegex(regexCheck.regex, path);
   let value = placeholderString(path);
   for (const check of checks) {
     if (check.kind === "min" && value.length < check.value) {

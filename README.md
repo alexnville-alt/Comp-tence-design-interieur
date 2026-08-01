@@ -20,26 +20,27 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée                                |
 | **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée                                |
 | **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée                                |
-| **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée — **en attente de validation** |
-| M8 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée                                |
+| **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée — **en attente de validation** |
+| M9 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
 `feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`,
-`feat(m7)` sur la branche `claude/interior-design-learning-platform-bam6l6`.
+`feat(m7)`, `feat(m8)` sur la branche `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M7** — 427 tests unitaires, 41 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 18 écrans/flux, en thème clair et sombre),
+**État à la fin de M8** — 466 tests unitaires, 43 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 20 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
 | Vérification                 | Commande            | Résultat                                       |
 | ---------------------------- | ------------------- | ---------------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 427 ✅ (domaine 228 · IA 60 · app 106 · ui 33) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 41 ✅                                          |
+| Tests unitaires              | `pnpm test`         | 466 ✅ (domaine 265 · IA 62 · app 106 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 43 ✅                                          |
 | Types (6 paquets)            | `pnpm typecheck`    | ✅                                             |
 | Lint (6 paquets)             | `pnpm lint`         | ✅                                             |
 | Format                       | `pnpm format:check` | ✅                                             |
-| Build de production          | `pnpm build`        | ✅ 27 routes                                   |
+| Build de production          | `pnpm build`        | ✅ 30 routes                                   |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
 lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
@@ -187,8 +188,32 @@ Lire dans cet ordre :
   pour l'ancrage documentaire du chat IA — le calcul se fait à la
   synchronisation du contenu, pas à la requête
 
+**Générateurs (M8)**
+
+- Génération IA d'un moodboard en un seul appel structuré : palette de 3 à 6
+  couleurs (rôle + justification) **et** sélection de fiches bibliothèque
+  (matériaux, éclairage, accessoires, végétaux) — l'IA choisit exclusivement
+  parmi des candidats réellement trouvés dans `LibraryItem` juste avant
+  l'appel (schéma Zod construit dynamiquement avec `z.enum` des slugs
+  candidats, ADR implicite : aucune fiche inventée ne peut valider), et répond
+  `null` plutôt que de forcer un choix médiocre quand rien ne convient
+- Contraste WCAG **recalculé côté serveur**, jamais annoncé par l'IA : chaque
+  couleur est comparée à la dominante (`computeContrastChecks`), ratio, seuils
+  AA/AAA affichés sur la fiche du moodboard — le nombre montré est le nombre
+  calculé, pas une reformulation de ce que le modèle a dit
+- Éditeur de moodboard : glisser-déposer libre sur un plateau à coordonnées
+  fixes (indépendant du pixel écran, comme l'atelier 2D en cm), plus une
+  liste accessible parallèle au même vocabulaire clavier que l'atelier
+  (flèches déplacent, R pivote, Suppr retire, Cmd/Ctrl+S enregistre
+  explicitement) ; ajout d'une fiche bibliothèque par recherche, export en
+  PNG recomposé depuis les mêmes transforms que l'affichage (pas une capture
+  d'écran)
+- Liste de mobilier dimensionnée par pièce, agrégée par pièce identique
+  (« Chaise × 4 », pas quatre lignes), avec lien vers la fiche bibliothèque
+  quand `catalogRef` en pointe une réelle
+
 **Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
-au sein de M7) :
+au sein de M7/M8) :
 
 - **Corpus bibliothèque incomplet** : 54 fiches contre ≥ 300 visées par
   docs/05 M7 — le pipeline (schéma, recherche, facettes, relations,
@@ -200,6 +225,10 @@ au sein de M7) :
   interrogeable, mais n'est pas encore branché sur le prompt système du chat
   IA (M5) — une extension distincte, pas incluse dans les tâches listées pour
   M7 dans docs/05
+- **Images de moodboard** : `LibraryItem.imageAssetId` n'est rempli par
+  aucune fiche à ce stade (docs/04 §3.8, pipeline de curation visuelle hors
+  périmètre) — les éléments sans image s'affichent avec leur libellé, dans
+  l'éditeur comme à l'export PNG
 - Import de plan (`ProjectAsset`, M10), XP/séries/badges (M9) — les champs
   `xpReward` existent en base mais ne sont crédités nulle part avant M9
 

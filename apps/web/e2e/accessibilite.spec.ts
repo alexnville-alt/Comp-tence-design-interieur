@@ -105,6 +105,19 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.waitForURL(/\/photos\/[a-z0-9]+$/, { timeout: 30_000 });
   await auditer(page, "atelier — analyse photo");
 
+  await page.getByRole("link", { name: "Liste de mobilier" }).click();
+  await page.waitForURL(/\/mobilier$/);
+  await auditer(page, "atelier — liste de mobilier");
+
+  const roomUrl = /(.+)\/mobilier$/.exec(page.url())![1]!;
+  const projectUrl = roomUrl.replace(/\/[a-z0-9]+$/, "");
+  await page.goto(`${projectUrl}/moodboards`);
+  await auditer(page, "atelier — liste des moodboards");
+  await page.getByLabel("Titre").fill("Ambiance test accessibilité");
+  await page.getByRole("button", { name: "Générer" }).click();
+  await page.waitForURL(/\/moodboards\/[a-z0-9]+$/, { timeout: 30_000 });
+  await auditer(page, "atelier — éditeur de moodboard");
+
   await page.goto("/bibliotheque");
   await auditer(page, "bibliothèque — recherche");
   await page.getByLabel("Rechercher").fill("chêne");

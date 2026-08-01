@@ -3,13 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreateRoomForm } from "@/features/studio/create-room-form";
 import { getProjectDetail } from "@/features/studio/data";
-import { ROOM_TYPE_LABELS } from "@/features/studio/room-type-labels";
+import { CreateMoodboardForm } from "@/features/generators/create-moodboard-form";
+import { listMoodboards } from "@/features/generators/moodboard-data";
 
-export const metadata: Metadata = { title: "Projet — Atelier" };
+export const metadata: Metadata = { title: "Moodboards — Atelier" };
 
-export default async function ProjectPage({
+export default async function MoodboardsPage({
   params,
 }: {
   params: Promise<{ projetId: string }>;
@@ -19,39 +19,38 @@ export default async function ProjectPage({
   const project = await getProjectDetail(user.id, projetId);
   if (!project) notFound();
 
+  const moodboards = await listMoodboards(user.id, projetId);
+
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-6 py-8">
       <header className="space-y-2">
         <p className="text-sm text-[var(--text-muted)]">
-          <Link href="/atelier">Atelier</Link> / {project.name}
+          <Link href="/atelier">Atelier</Link> /{" "}
+          <Link href={`/atelier/${project.id}`}>{project.name}</Link> / Moodboards
         </p>
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl">{project.name}</h1>
-          <Link
-            href={`/atelier/${project.id}/moodboards`}
-            className="text-sm text-[var(--accent)] underline underline-offset-4"
-          >
-            Moodboards
-          </Link>
-        </div>
+        <h1 className="text-3xl">Moodboards</h1>
       </header>
 
-      <CreateRoomForm projectId={project.id} />
+      <CreateMoodboardForm
+        projectId={project.id}
+        rooms={project.rooms.map((r) => ({ id: r.id, name: r.name }))}
+      />
 
-      {project.rooms.length === 0 ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucune pièce pour l'instant.</p>
+      {moodboards.length === 0 ? (
+        <p className="text-sm text-[var(--text-muted)]">
+          Aucun moodboard pour l'instant.
+        </p>
       ) : (
         <ul className="space-y-3">
-          {project.rooms.map((room) => (
-            <li key={room.id}>
-              <Link href={`/atelier/${project.id}/${room.id}`}>
+          {moodboards.map((moodboard) => (
+            <li key={moodboard.id}>
+              <Link href={`/atelier/${project.id}/moodboards/${moodboard.id}`}>
                 <Card className="transition-colors hover:border-[var(--border-strong)]">
                   <CardHeader>
-                    <CardTitle>{room.name}</CardTitle>
+                    <CardTitle>{moodboard.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm text-[var(--text-muted)]">
-                    {ROOM_TYPE_LABELS[room.type as keyof typeof ROOM_TYPE_LABELS] ??
-                      room.type}
+                    {moodboard.itemCount} élément{moodboard.itemCount > 1 ? "s" : ""}
                   </CardContent>
                 </Card>
               </Link>

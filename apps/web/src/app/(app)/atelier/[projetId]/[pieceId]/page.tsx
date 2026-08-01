@@ -24,14 +24,22 @@ export default async function RoomEditorPage({
         <Link href={`/atelier/${data.projectId}`}>{data.projectName}</Link> /{" "}
         {data.roomName}
       </p>
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl">{data.roomName}</h1>
-        <Link
-          href={`/atelier/${data.projectId}/${data.roomId}/photos`}
-          className="text-sm text-[var(--accent)] underline underline-offset-4"
-        >
-          Analyser une photo
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/atelier/${data.projectId}/${data.roomId}/mobilier`}
+            className="text-sm text-[var(--accent)] underline underline-offset-4"
+          >
+            Liste de mobilier
+          </Link>
+          <Link
+            href={`/atelier/${data.projectId}/${data.roomId}/photos`}
+            className="text-sm text-[var(--accent)] underline underline-offset-4"
+          >
+            Analyser une photo
+          </Link>
+        </div>
       </div>
 
       <StudioEditor

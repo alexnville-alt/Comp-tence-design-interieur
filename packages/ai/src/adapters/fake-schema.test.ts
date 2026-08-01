@@ -151,6 +151,21 @@ describe("generateFakeValue", () => {
     expect(() => schema.parse(generateFakeValue(schema))).not.toThrow();
   });
 
+  it("produit une couleur hexadécimale pour une chaîne avec .regex() (régression M8)", () => {
+    // `PaletteGenerationSchema` (M8) est le premier schéma passé à
+    // `complete()` avec un champ `.regex()` — sans ce cas, `stringFor()`
+    // ignorait le motif et produisait un texte de repli qui échouait
+    // ensuite `schema.parse()` dans `fakeStructuredResult`.
+    const schema = z.object({ hex: z.string().regex(/^#[0-9a-fA-F]{6}$/) });
+    const value = generateFakeValue(schema);
+    expect(() => schema.parse(value)).not.toThrow();
+  });
+
+  it("lève une erreur explicite quand aucun candidat ne satisfait le motif", () => {
+    const schema = z.string().regex(/^ZZZ$/);
+    expect(() => generateFakeValue(schema)).toThrow(/aucune chaîne factice/);
+  });
+
   it("gère un .refine() en déballant le schéma sous-jacent", () => {
     const schema = z
       .string()
