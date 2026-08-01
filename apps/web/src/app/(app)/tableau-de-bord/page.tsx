@@ -31,6 +31,27 @@ export default async function TableauDeBordPage({
   const startingLevel = getLevel(profile?.startingLevel ?? 1);
   const firstName = user.name?.split(" ")[0] ?? "";
 
+  // La prochaine leçon est la première, dans l'ordre du parcours, que
+  // l'apprenant n'a pas encore terminée — qu'il l'ait déjà commencée ou non.
+  const nextLesson = await prisma.lesson.findFirst({
+    where: {
+      published: true,
+      progress: { none: { userId: user.id, status: "COMPLETED" } },
+    },
+    orderBy: [
+      { chapter: { level: { number: "asc" } } },
+      { chapter: { number: "asc" } },
+      { number: "asc" },
+    ],
+    include: { chapter: { include: { level: true } } },
+  });
+  const nextLessonProgress = nextLesson
+    ? await prisma.lessonProgress.findUnique({
+        where: { userId_lessonId: { userId: user.id, lessonId: nextLesson.id } },
+        select: { status: true },
+      })
+    : null;
+
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-6 py-8">
       <header className="flex flex-wrap items-baseline justify-between gap-4">
@@ -59,18 +80,44 @@ export default async function TableauDeBordPage({
             <p className="mt-1 text-[var(--text)]">{startingLevel?.summary}</p>
           </div>
 
-          {/* Honnêteté sur l'état d'avancement : le moteur de leçons est le
-              module suivant. Afficher un faux bouton « Commencer » qui ne mène
-              nulle part serait pire qu'un message clair. */}
-          <Alert tone="info" title="Les leçons arrivent au module M2">
-            Le moteur de leçons, les quiz et les exercices sont en cours de construction.
-            La structure des 15 niveaux est déjà en place : consultez-la depuis le
-            parcours.
-          </Alert>
-
-          <Button asChild variant="secondary">
-            <Link href="/parcours">Voir le parcours</Link>
-          </Button>
+          {nextLesson ? (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-[var(--text-muted)]">
+                  {nextLessonProgress?.status === "IN_PROGRESS"
+                    ? "Reprendre"
+                    : "À suivre"}{" "}
+                  · {nextLesson.chapter.level.title}
+                </p>
+                <p className="mt-1 font-medium text-[var(--text)]">{nextLesson.title}</p>
+                <p className="text-sm text-[var(--text-muted)]">{nextLesson.summary}</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild>
+                  <Link
+                    href={`/parcours/${nextLesson.chapter.level.slug}/${nextLesson.chapter.slug}/${nextLesson.slug}`}
+                  >
+                    {nextLessonProgress?.status === "IN_PROGRESS"
+                      ? "Reprendre la leçon"
+                      : "Commencer la leçon"}
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <Link href="/parcours">Voir le parcours</Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <Alert tone="success" title="Vous êtes à jour">
+                Aucune leçon publiée ne vous attend pour l'instant. De nouveaux niveaux
+                arrivent progressivement.
+              </Alert>
+              <Button asChild variant="secondary">
+                <Link href="/parcours">Voir le parcours</Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

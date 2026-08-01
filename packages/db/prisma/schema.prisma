@@ -1,11 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1 : identité, profil, onboarding.
+// Périmètre M1+M2 : identité, profil, onboarding, curriculum et leçons.
 // Le schéma complet est spécifié dans docs/04-modele-de-donnees.md ; il est
-// livré par module (M2 apporte le curriculum, M3 le SRS, M4 l'atelier…).
+// livré par module (M3 apporte le SRS, M4 l'atelier…).
 // On ne crée pas trente tables inutilisées : chaque migration accompagne la
 // fonctionnalité qui s'en sert, ce qui garde les migrations relisibles.
+//
+// M2 n'ajoute PAS Exercise/Card/Assessment/LevelProgress : la notation, les
+// cartes mémoire et le déverrouillage par évaluation sont M3. Un niveau reste
+// donc « déverrouillé » selon le seul diagnostic de M1 (packages/domain,
+// isLevelUnlocked) jusqu'à ce que M3 introduise un vrai critère de réussite.
 // ─────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -50,6 +55,7 @@ model User {
   accounts            Account[]
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  lessonProgress      LessonProgress[]
 
   @@index([deletedAt])
 }
@@ -170,4 +176,117 @@ model PasswordResetToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+// ── Curriculum et leçons (M2) ─────────────────────────────────────────────
+
+/// Matérialise la structure des 15 niveaux définie dans
+/// `@atelier/domain` (packages/domain/src/curriculum/levels.ts), qui reste la
+/// source de vérité pour le titre, la phase et l'ordre — la synchronisation
+/// de contenu (apps/web/scripts/sync-content.ts) fait un upsert par
+/// `number`. `published` et `passingScore` sont en revanche des propriétés
+/// propres à la base : la structure des 15 niveaux est toujours visible
+/// (LEARN-01), `published` ne concerne ici que la présence de contenu réel.
+model Level {
+  id               String  @id @default(cuid())
+  number           Int     @unique
+  slug             String  @unique
+  title            String
+  summary          String
+  phase            Int
+  estimatedMinutes Int
+  requiresLevel    Int?
+  /// Utilisé à partir de M3 (évaluation de fin de niveau) — la colonne existe
+  /// dès maintenant pour éviter une migration supplémentaire au module M3.
+  passingScore     Int     @default(70)
+  published        Boolean @default(true)
+
+  chapters Chapter[]
+
+  @@index([phase, number])
+}
+
+/// Groupement thématique de leçons au sein d'un niveau. Sa métadonnée vit
+/// dans un fichier `_chapitre.yaml` à côté des leçons (voir ADR-0010) plutôt
+/// que d'être répétée dans le frontmatter de chaque leçon, pour éviter toute
+/// divergence de titre entre deux leçons d'un même chapitre.
+model Chapter {
+  id      String @id @default(cuid())
+  levelId String
+  level   Level  @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  number  Int
+  slug    String
+  title   String
+
+  lessons Lesson[]
+
+  @@unique([levelId, number])
+  @@unique([levelId, slug])
+}
+
+model Lesson {
+  id        String  @id @default(cuid())
+  chapterId String
+  chapter   Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  number    Int
+  /// Slug global (pas seulement unique dans son chapitre) : il apparaît seul
+  /// dans certains liens internes (favoris, historique) où le chemin complet
+  /// niveau/chapitre n'est pas disponible.
+  slug      String  @unique
+  title     String
+  summary   String
+  minutes   Int
+  xpReward  Int     @default(20)
+
+  /// Nombre de blocs pédagogiques (Texte, Schema, ErreurFrequente…) que
+  /// contient la leçon. Calculé à la synchronisation à partir de la
+  /// numérotation explicite `n={N}` des blocs MDX — voir
+  /// apps/web/src/lib/content/blocks.ts. Sert de dénominateur à la
+  /// progression (« 3/7 ») et à valider que `LessonProgress.blockIndex` reste
+  /// dans les bornes.
+  blockCount Int
+
+  /// SHA-256 du fichier source. Ne sert à rien fonctionnellement en M2 ;
+  /// permet de détecter en un coup d'œil (`prisma studio`, requête) qu'un
+  /// contenu a changé depuis la dernière synchronisation.
+  contentHash String
+
+  /// Structure prête, contenu vide en V1 (LEARN-03) — le bloc EmplacementVideo
+  /// affiche un état « à venir » tant que ce champ est `null`.
+  videoUrl  String?
+  published Boolean @default(true)
+
+  progress LessonProgress[]
+
+  @@unique([chapterId, number])
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model LessonProgress {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  status ProgressStatus @default(NOT_STARTED)
+  /// Numéro du bloc le plus avancé que l'utilisateur a lu, jamais décroissant
+  /// (voir features/learning/progress-actions.ts : le serveur applique un
+  /// maximum avec la valeur existante, pour rester correct même si deux
+  /// onglets envoient des mises à jour dans le désordre).
+  blockIndex Int @default(0)
+  /// Alimenté à partir de M9 (mesure par heartbeat, PROG-05). La colonne
+  /// existe dès maintenant : aucune migration à prévoir quand M9 l'utilisera.
+  timeSpentMs Int @default(0)
+
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([userId, status])
 }

@@ -82,6 +82,9 @@ jobs:
       - name: Migrations
         run: pnpm --filter @atelier/db migrate:deploy
 
+      - name: Synchronisation du contenu
+        run: pnpm --filter @atelier/web content:sync
+
       - name: Build
         run: pnpm build
 

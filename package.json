@@ -20,10 +20,11 @@
     "db:generate": "pnpm --filter @atelier/db generate",
     "db:migrate": "pnpm --filter @atelier/db migrate",
     "db:push": "pnpm --filter @atelier/db push",
-    "db:seed": "pnpm --filter @atelier/db seed",
+    "db:seed": "pnpm --filter @atelier/db seed && pnpm --filter @atelier/web content:sync",
     "db:studio": "pnpm --filter @atelier/db studio",
     "docker:up": "docker compose -f docker/compose.yml up -d",
-    "docker:down": "docker compose -f docker/compose.yml down"
+    "docker:down": "docker compose -f docker/compose.yml down",
+    "content:sync": "pnpm --filter @atelier/web content:sync"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

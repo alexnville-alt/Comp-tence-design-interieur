@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@atelier/db";
 import { Lock } from "lucide-react";
 import { LEVELS, PHASES, isLevelUnlocked, levelsOfPhase } from "@atelier/domain";
@@ -32,9 +33,9 @@ export default async function ParcoursPage() {
         </p>
       </header>
 
-      <Alert tone="info" title="Structure en place, contenu à venir">
-        Les titres et l'enchaînement des niveaux sont définitifs. Les leçons, quiz et
-        exercices sont livrés au module M2.
+      <Alert tone="info" title="Contenu en cours de publication">
+        Les titres et l'enchaînement des niveaux sont définitifs. Les leçons se publient
+        niveau par niveau ; le niveau 1 est déjà disponible.
       </Alert>
 
       {PHASES.map((phase) => (
@@ -51,19 +52,8 @@ export default async function ParcoursPage() {
           <ul className="space-y-2">
             {levelsOfPhase(phase.number).map((level) => {
               const unlocked = isLevelUnlocked(level.number, completed, startingLevel);
-              return (
-                <li
-                  key={level.number}
-                  className={cn(
-                    "flex items-start gap-4 rounded-[var(--radius-atelier)] border p-4",
-                    // Le verrouillage se lit à l'icône, au libellé
-                    // « Verrouillé » et au fond — pas à une opacité qui
-                    // rendrait le texte illisible (WCAG 1.4.3).
-                    unlocked
-                      ? "border-[var(--border)] bg-[var(--surface-raised)]"
-                      : "border-dashed border-[var(--border-strong)] bg-[var(--surface)]",
-                  )}
-                >
+              const content = (
+                <>
                   <span
                     className={cn(
                       "flex size-8 shrink-0 items-center justify-center rounded-full font-[family-name:var(--font-mono)] text-sm",
@@ -92,6 +82,34 @@ export default async function ParcoursPage() {
                   <span className="shrink-0 font-[family-name:var(--font-mono)] text-xs text-[var(--text-muted)]">
                     {Math.round(level.estimatedMinutes / 60)} h
                   </span>
+                </>
+              );
+
+              const className = cn(
+                "flex items-start gap-4 rounded-[var(--radius-atelier)] border p-4",
+                // Le verrouillage se lit à l'icône, au libellé
+                // « Verrouillé » et au fond — pas à une opacité qui
+                // rendrait le texte illisible (WCAG 1.4.3).
+                unlocked
+                  ? "border-[var(--border)] bg-[var(--surface-raised)]"
+                  : "border-dashed border-[var(--border-strong)] bg-[var(--surface)]",
+              );
+
+              return (
+                <li key={level.number}>
+                  {unlocked ? (
+                    <Link
+                      href={`/parcours/${level.slug}`}
+                      className={cn(
+                        className,
+                        "transition-colors hover:border-[var(--border-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+                      )}
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div className={className}>{content}</div>
+                  )}
                 </li>
               );
             })}

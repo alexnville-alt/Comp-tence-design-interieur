@@ -93,3 +93,24 @@ utilisateur.
 **Moyenne à élevée.** Passer plus tard à un CMS reviendrait à importer le MDX
 (structuré et typé, donc importable par script). L'inverse — extraire un
 contenu enfoui dans une base sans historique — serait bien plus douloureux.
+
+## Addendum (M2) — numérotation explicite des blocs
+
+La reprise exacte d'une leçon (rouvrir au bloc quitté) suppose une ancre
+stable par bloc. Deux options : analyser l'AST MDX (`remark`/`mdast`) pour
+déduire l'index de chaque bloc, ou exiger que chaque composant de bloc porte
+explicitement `n={N}` et valider cette numérotation par expression régulière
+(`apps/web/src/lib/content/blocks.ts`).
+
+La seconde a été retenue. Une analyse d'AST compterait les blocs correctement
+mais n'apporte rien de plus pour ce seul besoin, au prix d'une dépendance et
+d'une étape de compilation supplémentaires. La numérotation explicite, elle,
+sert aussi d'ancre HTML stable (`id="bloc-3"`) sans étape de post-traitement,
+et détecte une erreur de copier-coller d'auteur (un bloc dupliqué garde le
+même `n`) — un cas qu'une simple analyse d'AST ne détecterait pas non plus
+sans une vérification dédiée équivalente.
+
+**Contrepartie assumée** : l'auteur doit numéroter et renuméroter à la main.
+Le script de synchronisation refuse tout `.mdx` mal numéroté avec un message
+qui identifie le bloc fautif et la correction attendue — le coût se paie à
+l'écriture, jamais à l'exécution.

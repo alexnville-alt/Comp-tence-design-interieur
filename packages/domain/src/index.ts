@@ -11,3 +11,4 @@ export * from "./auth/password-policy";
 export * from "./onboarding/diagnostic";
 export * from "./onboarding/schema";
 export * from "./curriculum/levels";
+export * from "./curriculum/lesson-content";

@@ -63,6 +63,12 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.goto("/parcours");
   await auditer(page, "parcours");
 
+  await page.goto("/parcours/decouverte");
+  await auditer(page, "détail de niveau");
+
+  await page.goto("/parcours/decouverte/notions-generales/quest-ce-qu-un-espace-reussi");
+  await auditer(page, "lecteur de leçon");
+
   await page.goto("/profil");
   await auditer(page, "profil");
 });
