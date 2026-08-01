@@ -8,6 +8,6 @@ import { requireOnboardedUser } from "@/lib/auth";
  * Server Action et chaque requête refait sa propre vérification (docs/02 §6).
  */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  await requireOnboardedUser();
-  return <AppShell>{children}</AppShell>;
+  const user = await requireOnboardedUser();
+  return <AppShell role={user.role}>{children}</AppShell>;
 }

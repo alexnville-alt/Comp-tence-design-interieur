@@ -18,3 +18,4 @@ export * from "./curriculum/assessment";
 export * from "./exercises";
 export * from "./srs";
 export * from "./geometry";
+export * from "./ai/guardrails";

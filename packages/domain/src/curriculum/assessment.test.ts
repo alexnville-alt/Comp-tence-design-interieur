@@ -47,6 +47,22 @@ describe("AssessmentFrontmatterSchema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("accepte un mélange des 7 types auto-corrigés et d'un cas ouvert (M5)", () => {
+    const openCase = {
+      slug: "cas-salon-nord",
+      type: "OPEN_CASE" as const,
+      prompt: "Proposez un aménagement pour ce salon.",
+      scenario: "Un salon de 18 m², orienté nord.",
+      constraint: "Budget mobilier ≤ 2000 €.",
+      gradingNotes: "Attendre une réponse sur l'éclairage compensatoire.",
+    };
+    const parsed = AssessmentFrontmatterSchema.safeParse({
+      title: "Évaluation mixte",
+      exercises: [exercise, openCase],
+    });
+    expect(parsed.success).toBe(true);
+  });
 });
 
 describe("computeAssessmentScore", () => {

@@ -63,3 +63,24 @@ exercises:
         radius: 10
         label: "Tapis"
         correct: false
+
+  - slug: eval-decouverte-cas-salon-nord
+    type: OPEN_CASE
+    prompt: "Appliquez la grille de lecture en 5 questions à ce salon, et justifiez votre lecture."
+    scenario: >-
+      Un salon de 18 m², orienté plein nord, avec une seule fenêtre en façade.
+      Le canapé fait face à un mur vide ; la cheminée, murée, ne sert plus
+      qu'à poser des objets. Une bibliothèque encombrée occupe l'angle
+      opposé à la fenêtre.
+    constraint: >-
+      Identifiez le point focal actuel de la pièce et proposez, en une
+      phrase justifiée, s'il faut le conserver ou le déplacer.
+    gradingNotes: >-
+      Une bonne réponse identifie que la cheminée murée n'est plus un point
+      focal fonctionnel (elle ne capte plus l'usage réel de la pièce) et
+      propose soit de la restaurer comme point focal assumé, soit de créer
+      un nouveau point focal côté fenêtre pour compenser l'orientation nord
+      (lumière naturelle rare, à valoriser). Une réponse qui garde la
+      cheminée murée comme point focal sans le justifier manque le critère
+      « réponse à la contrainte ». Le vocabulaire attendu : point focal,
+      orientation, lecture de l'espace (leçons 1 à 3 du niveau Découverte).

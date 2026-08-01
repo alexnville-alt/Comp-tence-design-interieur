@@ -1,21 +1,23 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2+M3+M4 : identité, profil, onboarding, curriculum, leçons,
-// exercices notés, évaluations de fin de niveau, répétition espacée et
-// atelier 2D. Le schéma complet est spécifié dans docs/04-modele-de-donnees.md ;
-// il est livré par module (M5 apporte la couche IA, M6 l'analyse photo…).
-// On ne crée pas trente tables inutilisées : chaque migration accompagne la
-// fonctionnalité qui s'en sert, ce qui garde les migrations relisibles.
+// Périmètre M1+M2+M3+M4+M5 : identité, profil, onboarding, curriculum,
+// leçons, exercices notés, évaluations de fin de niveau, répétition espacée,
+// atelier 2D et couche IA. Le schéma complet est spécifié dans
+// docs/04-modele-de-donnees.md ; il est livré par module (M6 apporte l'analyse
+// photo, M7 la bibliothèque…). On ne crée pas trente tables inutilisées :
+// chaque migration accompagne la fonctionnalité qui s'en sert, ce qui garde
+// les migrations relisibles.
 //
 // M3 n'ajoute PAS XpEvent/Badge/UserBadge/StudySession : le crédit XP réel,
 // les séries et les badges sont M9 (gamification). `Lesson.xpReward` et
 // `Exercise.xpReward` existent déjà mais ne sont encore crédités nulle part.
 //
-// M3 n'implémente que 7 des 10 `ExerciseType` de docs/04 : LAYOUT dépend du
-// canevas de l'atelier (M4) et OPEN_CASE de la correction par IA (M5) — les
-// ajouter à l'enum sans code capable de les traiter serait une fonctionnalité
-// à moitié faite. CHALLENGE (défi hebdomadaire) est M9.
+// M5 ajoute OPEN_CASE à `ExerciseType` (corrigé par l'IA sur le barème de
+// docs/06 §1.3) : 8 des 10 types de docs/04 sont maintenant implémentés.
+// LAYOUT (dépend du canevas de l'atelier, M4, mais pas encore intégré comme
+// type d'exercice de leçon) et CHALLENGE (défi hebdomadaire, M9) restent
+// exclus — même principe : pas d'enum sans code capable de le traiter.
 //
 // M4 s'écarte de docs/04 §3.6 sur deux points, documentés dans le rapport de
 // livraison : pas de `Room.currentVersionId` (la version courante est la
@@ -73,6 +75,8 @@ model User {
   submissions         Submission[]
   cardReviews         CardReview[]
   projects            Project[]
+  conversations       AiConversation[]
+  aiUsage             AiUsage[]
 
   @@index([deletedAt])
 }
@@ -326,6 +330,10 @@ enum ExerciseType {
   HOTSPOT
   PALETTE
   MATERIAL_CHOICE
+  /// Cas pratique ouvert, corrigé par l'IA sur le barème de docs/06 §1.3
+  /// (M5) — hors du `ExerciseFrontmatterSchema` à discriminant de
+  /// `packages/domain` (schéma et correction séparés, voir ce paquet).
+  OPEN_CASE
 }
 
 /// Un exercice est attaché à une leçon (pratique immédiate) OU à une
@@ -374,6 +382,12 @@ model Submission {
   scoreRatio  Float
   correct     Boolean
   gradedBy    GradedBy @default(AUTO)
+  /// Retour structuré de la correction IA (OPEN_CASE uniquement) : deux
+  /// points forts nommés, deux axes d'amélioration actionnables, la règle à
+  /// réviser — voir `GradingFeedbackSchema` (packages/domain). `null` pour
+  /// les 7 types corrigés automatiquement, où l'explication vient du
+  /// frontmatter de l'exercice, pas de la soumission.
+  feedback    Json?
   attempt     Int      @default(1)
   timeSpentMs Int?
   createdAt   DateTime @default(now())
@@ -383,7 +397,6 @@ model Submission {
 
 enum GradedBy {
   AUTO
-  /// Pas encore émis : la correction IA (OPEN_CASE) arrive en M5.
   AI
 }
 
@@ -550,9 +563,9 @@ enum Orientation {
 /// réécriture en place. La version courante est la plus récente par
 /// `createdAt` — voir la note en tête de fichier.
 model RoomVersion {
-  id     String @id @default(cuid())
+  id     String  @id @default(cuid())
   roomId String
-  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room   Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
   label  String
   notes  String?
 
@@ -563,4 +576,76 @@ model RoomVersion {
   createdAt    DateTime @default(now())
 
   @@index([roomId, createdAt])
+}
+
+// ── Couche IA (M5, docs/04 §3.9) ─────────────────────────────────────────
+
+/// Un fil de discussion avec l'assistant (AI-01). `context` ancre la
+/// conversation à ce qu'affichait l'apprenant en l'ouvrant — jamais
+/// interpolé dans le prompt système de `@atelier/ai` (ADR-0005) : seul le
+/// contenu des `AiMessage` sert de contexte variable envoyé au fournisseur.
+model AiConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  /// Ancrage : { lessonId?, roomVersionId?, projectId?, libraryItemId? }
+  context   Json?
+  createdAt DateTime    @default(now())
+  messages  AiMessage[]
+
+  @@index([userId, createdAt])
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           AiRole
+  content        String
+  /// Fiches bibliothèque citées (AI-08) — traçabilité des affirmations.
+  /// `null` avant M7 : rien à citer tant qu'il n'existe pas de bibliothèque.
+  citations      Json?
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+enum AiRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+/// Un enregistrement par appel au fournisseur IA (succès ou échec) : quotas,
+/// coûts, diagnostic de performance (docs/02 §5.6). Écrit après chaque appel,
+/// jamais mis à jour — c'est la table qu'interroge `Profile.aiMonthlyQuota`
+/// avant d'autoriser un nouvel appel (M5 tâche « quotas et coûts »).
+model AiUsage {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature      AiFeature
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  cachedTokens Int       @default(0)
+  /// Coût en centimes d'euro — un entier évite l'arithmétique flottante sur
+  /// une donnée comptable (même choix que les montants ailleurs dans docs/04).
+  costCents    Int
+  durationMs   Int
+  success      Boolean   @default(true)
+  errorCode    String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+}
+
+enum AiFeature {
+  CHAT
+  PHOTO_ANALYSIS
+  GRADING
+  GENERATOR
+  CRITIQUE
 }

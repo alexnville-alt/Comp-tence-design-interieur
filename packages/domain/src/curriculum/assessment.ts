@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ExerciseFrontmatterSchema } from "../exercises/schema";
+import { AnyExerciseFrontmatterSchema } from "../exercises/open-case";
 
 /**
  * Évaluation de fin de niveau (docs/05 M3).
@@ -7,12 +7,17 @@ import { ExerciseFrontmatterSchema } from "../exercises/schema";
  * Authored comme un fichier de contenu (`_evaluation.yaml`, ADR-0010), pas
  * en base : mêmes raisons que le reste du contenu — relecture en pull
  * request, historique, aucun back-office à construire.
+ *
+ * `exercises` accepte les 8 types (`AnyExerciseFrontmatterSchema`, M5) : une
+ * évaluation peut mélanger les 7 types auto-corrigés et un cas ouvert
+ * (OPEN_CASE) noté par l'IA. `LessonFrontmatterSchema`, lui, reste borné aux
+ * 7 types purs — aucune leçon n'embarque de cas ouvert pour l'instant.
  */
 export const AssessmentFrontmatterSchema = z.object({
   title: z.string().trim().min(1, "Le titre de l'évaluation ne peut pas être vide."),
   passingScore: z.number().int().min(0).max(100).default(70),
   exercises: z
-    .array(ExerciseFrontmatterSchema)
+    .array(AnyExerciseFrontmatterSchema)
     .min(1, "Une évaluation doit contenir au moins un exercice.")
     .superRefine((items, ctx) => {
       const seen = new Set<string>();

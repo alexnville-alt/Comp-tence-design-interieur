@@ -17,32 +17,37 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M1**      | Authentification, onboarding, profil, RGPD                               | ✅ Livrée                                |
 | **M2**      | Moteur de leçons (MDX, 11 blocs, reprise exacte, carte de parcours)      | ✅ Livrée                                |
 | **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée                                |
-| **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée — **en attente de validation** |
-| M5 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée                                |
+| **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée — **en attente de validation** |
+| M6 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
-`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)` sur la branche
+`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)` sur la branche
 `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M4** — 266 tests unitaires, 33 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 11 écrans/flux, en thème clair et sombre),
+**État à la fin de M5** — 340 tests unitaires, 39 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 13 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
-| Vérification                 | Commande            | Résultat                                  |
-| ---------------------------- | ------------------- | ----------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 266 ✅ (domaine 172 · tokens 33 · app 61) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 33 ✅                                     |
-| Types (5 paquets)            | `pnpm typecheck`    | ✅                                        |
-| Lint (5 paquets)             | `pnpm lint`         | ✅                                        |
-| Format                       | `pnpm format:check` | ✅                                        |
-| Build de production          | `pnpm build`        | ✅ 20 routes                              |
+| Vérification                 | Commande            | Résultat                              |
+| ---------------------------- | ------------------- | ------------------------------------- |
+| Tests unitaires              | `pnpm test`         | 340 ✅ (domaine 208 · IA 53 · app 79) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 39 ✅                                 |
+| Types (6 paquets)            | `pnpm typecheck`    | ✅                                    |
+| Lint (6 paquets)             | `pnpm lint`         | ✅                                    |
+| Format                       | `pnpm format:check` | ✅                                    |
+| Build de production          | `pnpm build`        | ✅ 21 routes                          |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
-lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`) et la
+lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
 géométrie de l'atelier (`geometry/` : collisions SAT, circulation par plus
-court chemin le plus large, dégagements) y sont testées sans base de données
-ni navigateur.
+court chemin le plus large, dégagements) et les garde-fous IA (`ai/`) y sont
+testés sans base de données ni navigateur. Le nouveau paquet `packages/ai`
+(port `AiProvider`, adaptateur factice, convertisseur Zod → JSON Schema) est
+à ~99 % de couverture — l'adaptateur Anthropic lui-même en est exclu : il
+n'est exercé que par la suite « en direct » (`AI_LIVE=1`, manuelle, jamais en
+CI — ADR-0011).
 
 ---
 
@@ -125,10 +130,30 @@ Lire dans cet ordre :
   aussi un élément focalisable et décrit en toutes lettres pour un lecteur
   d'écran
 
-**Hors périmètre pour l'instant** (modules à venir) : assistant IA (M5),
-analyse photo (M6), bibliothèque de matériaux/styles (M7), XP/séries/badges
-(M9) — les champs `xpReward` existent en base mais ne sont crédités nulle
-part avant M9.
+**Couche IA (M5)**
+
+- Port `AiProvider` (`packages/ai`) + adaptateur Anthropic (`claude-opus-5`,
+  pensée adaptative, cache de prompt système) + adaptateur factice
+  déterministe, utilisé par défaut en développement et en CI (`AI_PROVIDER=fake`)
+  — tests de contrat identiques sur les deux adaptateurs
+- Chat pédagogique en streaming (SSE), panneau contextuel sur chaque leçon
+  (`/parcours/.../[lecon]`), historique persisté (`AiConversation`/`AiMessage`)
+- Garde-fous à trois niveaux (AI-09) : pré-filtrage des sujets à risque (mur
+  porteur, électricité, gaz, amiante, plomb) sans aucun appel IA, cadrage par
+  le prompt système, sorties toujours validées par un schéma Zod avec reprise
+  puis dégradation propre
+- Quotas mensuels vérifiés **avant** chaque appel, coûts et tokens tracés
+  après chaque appel — réussi ou non (`AiUsage`) — et tableau
+  d'administration réservé aux comptes `ADMIN` (`/administration/ia`)
+- Cas pratiques ouverts (OPEN_CASE) : barème visible **avant** de répondre,
+  correction IA sur sortie structurée (note, deux points forts, deux axes
+  d'amélioration, une règle à réviser) — un exercice réel dans l'évaluation
+  du niveau 1
+
+**Hors périmètre pour l'instant** (modules à venir) : ancrage documentaire du
+chat sur la bibliothèque — RAG (dépend de `LibraryItem`, M7), analyse photo
+(M6), bibliothèque de matériaux/styles (M7), XP/séries/badges (M9) — les
+champs `xpReward` existent en base mais ne sont crédités nulle part avant M9.
 
 ## Démarrage
 

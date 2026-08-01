@@ -16,7 +16,11 @@
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prisma } from "@atelier/db";
-import { LEVELS, type CardFrontmatter, type ExerciseFrontmatter } from "@atelier/domain";
+import {
+  LEVELS,
+  type AnyExerciseFrontmatter,
+  type CardFrontmatter,
+} from "@atelier/domain";
 import { ContentValidationError } from "../src/lib/content/frontmatter";
 import { scanContent } from "../src/lib/content/registry";
 
@@ -28,10 +32,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  * champs spécifiques au type : `gradeExercise` (packages/domain) attend un
  * `ExerciseFrontmatter` entier, et le reconstruire à partir de colonnes
  * éparpillées serait plus fragile qu'une désérialisation directe suivie
- * d'une revalidation Zod côté lecture.
+ * d'une revalidation Zod côté lecture. `AnyExerciseFrontmatter` (M5) inclut
+ * `OPEN_CASE` en plus des 7 types auto-corrigés — cette fonction n'a besoin
+ * d'aucun champ propre à un type précis, donc rien d'autre ne change ici.
  */
 async function upsertExercise(
-  exercise: ExerciseFrontmatter,
+  exercise: AnyExerciseFrontmatter,
   order: number,
   container:
     | { lessonId: string; assessmentId?: never }

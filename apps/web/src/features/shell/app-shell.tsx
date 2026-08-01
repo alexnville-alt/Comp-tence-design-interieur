@@ -9,6 +9,7 @@ import {
   Library,
   PencilRuler,
   RotateCcw,
+  ShieldCheck,
   Settings,
 } from "lucide-react";
 import { cn } from "@atelier/ui";
@@ -66,6 +67,14 @@ const NAV: NavItem[] = [
   { href: "/projets", label: "Projets", icon: Home, comingIn: "M10", mobile: false },
 ];
 
+const ADMIN_ITEM: NavItem = {
+  href: "/administration/ia",
+  label: "Administration IA",
+  icon: ShieldCheck,
+  comingIn: null,
+  mobile: false,
+};
+
 const PROFILE_ITEM: NavItem = {
   href: "/profil",
   label: "Profil",
@@ -74,8 +83,15 @@ const PROFILE_ITEM: NavItem = {
   mobile: true,
 };
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  role,
+}: {
+  children: React.ReactNode;
+  role: "LEARNER" | "ADMIN";
+}) {
   const pathname = usePathname();
+  const nav = role === "ADMIN" ? [...NAV, ADMIN_ITEM] : NAV;
 
   // Note : l'état « à venir » est signalé par un libellé de module et
   // `aria-disabled`, jamais par une opacité réduite — voir tokens.css.
@@ -94,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         <ul className="space-y-1">
-          {NAV.map((item) => (
+          {nav.map((item) => (
             <li key={item.href}>
               <SidebarLink item={item} active={pathname.startsWith(item.href)} />
             </li>

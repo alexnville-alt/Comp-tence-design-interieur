@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@atelier/db";
-import { ExerciseFrontmatterSchema, toPublicExercise } from "@atelier/domain";
 import { requireOnboardedUser } from "@/lib/auth";
-import { ExercisePlayer } from "@/features/exercises/exercise-player";
+import { ExerciseBlock } from "@/features/exercises/exercise-block";
 import { FinalizeAssessmentButton } from "@/features/assessment/finalize-button";
 
 export async function generateMetadata({
@@ -49,17 +48,9 @@ export default async function EvaluationPage({
       </header>
 
       <div className="space-y-4">
-        {level.assessment.exercises.map((exercise) => {
-          const parsed = ExerciseFrontmatterSchema.safeParse(exercise.payload);
-          if (!parsed.success) return null;
-          return (
-            <ExercisePlayer
-              key={exercise.id}
-              exerciseId={exercise.id}
-              exercise={toPublicExercise(parsed.data)}
-            />
-          );
-        })}
+        {level.assessment.exercises.map((exercise) => (
+          <ExerciseBlock key={exercise.id} exercise={exercise} />
+        ))}
       </div>
 
       <FinalizeAssessmentButton

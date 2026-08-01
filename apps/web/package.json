@@ -16,6 +16,7 @@
     "content:sync": "dotenv -e ../../.env -- tsx scripts/sync-content.ts"
   },
   "dependencies": {
+    "@atelier/ai": "workspace:*",
     "@atelier/db": "workspace:*",
     "@atelier/domain": "workspace:*",
     "@atelier/ui": "workspace:*",

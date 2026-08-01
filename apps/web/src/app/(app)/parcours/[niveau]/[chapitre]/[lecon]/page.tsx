@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@atelier/db";
-import { ExerciseFrontmatterSchema, toPublicExercise } from "@atelier/domain";
 import { requireOnboardedUser } from "@/lib/auth";
 import { LessonContent } from "@/lib/content/compile";
 import { getContentRegistry } from "@/lib/content/get-registry";
 import { LessonProgressTracker } from "@/features/learning/lesson-progress-tracker";
-import { ExercisePlayer } from "@/features/exercises/exercise-player";
+import { ExerciseBlock } from "@/features/exercises/exercise-block";
+import { ChatPanel } from "@/features/ai/chat-panel";
 
 async function loadLesson(niveau: string, chapitre: string, lecon: string) {
   const lesson = await prisma.lesson.findUnique({
@@ -83,20 +83,14 @@ export default async function LeconPage({
         <LessonContent content={contentLesson.content} videoUrl={lesson.videoUrl} />
       </div>
 
+      <ChatPanel lessonId={lesson.id} />
+
       {lesson.exercises.length > 0 ? (
         <section className="space-y-4">
           <h2 className="text-xl">Exercices</h2>
-          {lesson.exercises.map((exercise) => {
-            const parsed = ExerciseFrontmatterSchema.safeParse(exercise.payload);
-            if (!parsed.success) return null;
-            return (
-              <ExercisePlayer
-                key={exercise.id}
-                exerciseId={exercise.id}
-                exercise={toPublicExercise(parsed.data)}
-              />
-            );
-          })}
+          {lesson.exercises.map((exercise) => (
+            <ExerciseBlock key={exercise.id} exercise={exercise} />
+          ))}
         </section>
       ) : null}
     </div>

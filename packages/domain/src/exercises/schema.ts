@@ -8,12 +8,16 @@ import { z } from "zod";
  * le reste du contenu (ADR-0010). `registry.ts` sépare ensuite `prompt` du
  * reste avant d'écrire `Exercise.payload` en base.
  *
- * Seuls les types utilisables sans dépendre d'un module non encore construit
- * sont couverts ici : `LAYOUT` (atelier 2D, M4) et `OPEN_CASE` (correction
- * IA, M5) restent hors périmètre M3 — voir le rapport de livraison.
+ * Les 7 types couverts ici sont corrigés de façon pure et synchrone
+ * (`gradeExercise`, `grading.ts`). `OPEN_CASE` (M5, `open-case.ts`) est
+ * délibérément **hors** de ce `discriminatedUnion` : sa correction appelle
+ * `@atelier/ai`, donc ni pure ni synchrone — l'y forcer aurait cassé
+ * l'exhaustivité de `gradeExercise` sur un type qu'elle ne peut pas traiter.
+ * `LAYOUT` (atelier 2D, M4) reste hors périmètre : pas encore intégré comme
+ * type d'exercice de leçon — voir le rapport de livraison M3.
  */
 
-const slugSchema = z
+export const slugSchema = z
   .string()
   .min(1, "Le slug ne peut pas être vide.")
   .regex(

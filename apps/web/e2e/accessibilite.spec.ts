@@ -68,6 +68,8 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
 
   await page.goto("/parcours/decouverte/notions-generales/quest-ce-qu-un-espace-reussi");
   await auditer(page, "lecteur de leçon");
+  await page.getByText("Assistant IA — poser une question sur cette leçon").click();
+  await auditer(page, "lecteur de leçon — assistant IA ouvert");
 
   await page.goto(
     "/parcours/decouverte/notions-generales/les-dix-erreurs-qui-ruinent-une-piece",

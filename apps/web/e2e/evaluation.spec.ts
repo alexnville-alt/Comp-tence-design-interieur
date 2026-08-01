@@ -82,6 +82,18 @@ async function passAssessment(page: Page): Promise<void> {
   await hotspot.getByRole("checkbox", { name: "Cheminée" }).check();
   await hotspot.getByRole("button", { name: "Valider" }).click();
 
+  // Cas ouvert (OPEN_CASE, M5) : corrigé par l'IA (l'adaptateur factice en
+  // E2E, AI_PROVIDER=fake) — la note s'affiche de façon asynchrone.
+  const openCase = page.locator('[data-exercise-slug="eval-decouverte-cas-salon-nord"]');
+  await openCase
+    .getByLabel("Votre réponse")
+    .fill(
+      "Je restaurerais la cheminée comme point focal assumé, quitte à la rouvrir, " +
+        "car elle structure déjà la lecture de la pièce mieux qu'un nouveau point focal côté fenêtre.",
+    );
+  await openCase.getByRole("button", { name: "Envoyer pour correction" }).click();
+  await expect(openCase.getByText(/^Note :/)).toBeVisible();
+
   await page.getByRole("button", { name: "Valider l'évaluation" }).click();
 }
 

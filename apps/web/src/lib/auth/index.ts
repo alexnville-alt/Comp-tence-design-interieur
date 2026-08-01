@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { prisma } from "@atelier/db";
 
 import { authConfig } from "./config";
@@ -71,6 +71,17 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function requireOnboardedUser(): Promise<CurrentUser> {
   const user = await requireUser();
   if (!user.onboarded) redirect("/bienvenue");
+  return user;
+}
+
+/**
+ * Exige le rôle `ADMIN`. `notFound()` plutôt qu'une redirection : un
+ * apprenant qui tombe sur l'URL d'une page d'administration ne doit même pas
+ * apprendre qu'elle existe.
+ */
+export async function requireAdmin(): Promise<CurrentUser> {
+  const user = await requireOnboardedUser();
+  if (user.role !== "ADMIN") notFound();
   return user;
 }
 
