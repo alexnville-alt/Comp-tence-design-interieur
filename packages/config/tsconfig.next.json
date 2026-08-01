@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "jsx": "preserve",
+    "noEmit": true,
+    "allowJs": true,
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    // Une application n'émet pas de fichiers de déclaration. Laisser
+    // `declaration: true` (hérité de la base, utile pour les paquets) fait
+    // apparaître des TS2742 « type non nommable » dès qu'un type provient
+    // d'une dépendance transitive non résolvable — ce qui est le cas normal
+    // avec l'isolation stricte de pnpm.
+    "declaration": false,
+    "declarationMap": false
+  }
+}

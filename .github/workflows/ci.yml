@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # Une nouvelle poussée annule la CI précédente de la même branche : inutile
+  # de payer une exécution complète pour un commit déjà remplacé.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Valeurs factices : la CI ne doit jamais avoir besoin de secrets de
+  # production. La base est un service éphémère, les appels IA sont simulés
+  # par l'adaptateur factice (ADR-0005, ADR-0011).
+  DATABASE_URL: postgresql://atelier:atelier@localhost:5432/atelier?schema=public
+  AUTH_SECRET: ci-secret-quinze-caracteres-et-plus-pour-passer-la-validation
+  APP_URL: http://127.0.0.1:3100
+  MAIL_TRANSPORT: console
+  AI_PROVIDER: fake
+
+jobs:
+  qualite:
+    name: Lint · types · tests unitaires
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Types
+        run: pnpm typecheck
+
+      - name: Tests unitaires
+        run: pnpm test
+
+  e2e:
+    name: Build · E2E · accessibilité
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: atelier
+          POSTGRES_USER: atelier
+          POSTGRES_PASSWORD: atelier
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U atelier -d atelier"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+
+      - name: Migrations
+        run: pnpm --filter @atelier/db migrate:deploy
+
+      - name: Build
+        run: pnpm build
+
+      - name: Navigateur Playwright
+        run: pnpm --filter @atelier/web exec playwright install --with-deps chromium
+
+      - name: Tests E2E et audit d'accessibilité
+        run: pnpm e2e
+
+      - name: Rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  # Vérifie que l'image se construit sans secret : c'est la garantie que
+  # `next build` ne dépend pas de la configuration de production (lib/env.ts).
+  docker:
+    name: Image Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Construire l'image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

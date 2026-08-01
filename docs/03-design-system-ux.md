@@ -11,16 +11,16 @@
 
 Le produit emprunte à quatre références, chacune pour une raison précise :
 
-| Référence | Ce qu'on lui prend | Ce qu'on ne lui prend pas |
-|-----------|-------------------|---------------------------|
-| **Apple** | Générosité des espaces, typographie qui porte la hiérarchie, absence de décoration gratuite | Le minimalisme froid — on parle de décoration, la chaleur est un argument |
-| **Notion** | Contenu en blocs, densité maîtrisée, navigation latérale calme | La grisaille uniforme |
-| **Figma** | Ergonomie de l'atelier : panneaux latéraux, inspecteur de propriétés, raccourcis clavier | La complexité destinée aux professionnels |
-| **Duolingo** | Boucle de motivation : progression visible, célébration, série | L'infantilisation graphique — notre public est adulte |
-| **Airbnb** | La photographie comme sujet principal, cartes chaleureuses | L'orientation transactionnelle |
+| Référence    | Ce qu'on lui prend                                                                          | Ce qu'on ne lui prend pas                                                 |
+| ------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Apple**    | Générosité des espaces, typographie qui porte la hiérarchie, absence de décoration gratuite | Le minimalisme froid — on parle de décoration, la chaleur est un argument |
+| **Notion**   | Contenu en blocs, densité maîtrisée, navigation latérale calme                              | La grisaille uniforme                                                     |
+| **Figma**    | Ergonomie de l'atelier : panneaux latéraux, inspecteur de propriétés, raccourcis clavier    | La complexité destinée aux professionnels                                 |
+| **Duolingo** | Boucle de motivation : progression visible, célébration, série                              | L'infantilisation graphique — notre public est adulte                     |
+| **Airbnb**   | La photographie comme sujet principal, cartes chaleureuses                                  | L'orientation transactionnelle                                            |
 
-**Le principe qui tranche les cas ambigus** : *l'interface est un cadre neutre
-au service d'images colorées.* Une application de design d'intérieur ne doit
+**Le principe qui tranche les cas ambigus** : _l'interface est un cadre neutre
+au service d'images colorées._ Une application de design d'intérieur ne doit
 jamais concurrencer visuellement le contenu qu'elle présente. D'où une palette
 d'interface volontairement désaturée, avec une seule couleur d'accent.
 
@@ -36,67 +36,78 @@ sans recompiler ni dupliquer les classes.
 ```css
 :root {
   /* Neutres — base chaude (teinte ~40°), pas de gris bleuté froid */
-  --bg:            oklch(99%  0.004 90);
-  --surface:       oklch(97%  0.006 90);
-  --surface-raised:oklch(100% 0     0);
-  --border:        oklch(90%  0.008 90);
-  --text:          oklch(22%  0.012 60);
-  --text-muted:    oklch(52%  0.010 60);
+  --bg: oklch(99% 0.004 90);
+  --surface: oklch(97% 0.006 90);
+  --surface-raised: oklch(100% 0 0);
+  --border: oklch(90% 0.008 90); /* séparateurs décoratifs */
+  --border-strong: oklch(64% 0.012 90); /* bordure d'élément interactif : 3:1 */
+  --text: oklch(22% 0.012 60);
+  --text-muted: oklch(52% 0.01 60);
 
   /* Accent unique — terracotta : chaleureux, lié à l'univers matière */
-  --accent:        oklch(62%  0.148 42);
-  --accent-hover:  oklch(56%  0.150 42);
-  --accent-fg:     oklch(99%  0.004 90);
-  --accent-subtle: oklch(95%  0.028 42);
+  --accent: oklch(56% 0.15 42);
+  --accent-hover: oklch(50% 0.152 42);
+  --accent-fg: oklch(99% 0.004 90);
+  --accent-subtle: oklch(95% 0.028 42);
 
   /* Sémantiques */
-  --success:       oklch(60%  0.130 150);
-  --warning:       oklch(72%  0.140 75);
-  --danger:        oklch(58%  0.170 27);
-  --info:          oklch(60%  0.110 240);
+  --success: oklch(60% 0.13 150);
+  --warning: oklch(72% 0.14 75);
+  --danger: oklch(58% 0.17 27);
+  --info: oklch(60% 0.11 240);
 
   /* Gravité des problèmes détectés par l'IA */
-  --sev-minor:     var(--info);
-  --sev-medium:    var(--warning);
-  --sev-major:     var(--danger);
+  --sev-minor: var(--info);
+  --sev-medium: var(--warning);
+  --sev-major: var(--danger);
 
   --radius: 0.75rem;
   --shadow-1: 0 1px 2px oklch(20% 0.01 60 / 0.06);
   --shadow-2: 0 4px 16px oklch(20% 0.01 60 / 0.08);
 }
 
-:root[data-theme="dark"], @media (prefers-color-scheme: dark) {
-  --bg:            oklch(17%  0.010 60);
-  --surface:       oklch(21%  0.012 60);
-  --surface-raised:oklch(25%  0.012 60);
-  --border:        oklch(32%  0.012 60);
-  --text:          oklch(95%  0.006 90);
-  --text-muted:    oklch(68%  0.010 70);
-  --accent:        oklch(70%  0.140 42);   /* remonté : contraste AA sur fond sombre */
-  --accent-subtle: oklch(30%  0.045 42);
+:root[data-theme="dark"],
+@media (prefers-color-scheme: dark) {
+  --bg: oklch(17% 0.01 60);
+  --surface: oklch(21% 0.012 60);
+  --surface-raised: oklch(25% 0.012 60);
+  --border: oklch(32% 0.012 60);
+  --text: oklch(95% 0.006 90);
+  --text-muted: oklch(68% 0.01 70);
+  --border-strong: oklch(52% 0.014 60);
+  --accent: oklch(70% 0.14 42); /* remonté : contraste AA sur fond sombre */
+  --accent-subtle: oklch(30% 0.045 42);
 }
 ```
 
 **Pourquoi OKLCH** : la luminosité y est perceptuellement uniforme. En passant
-de `62%` à `70%` sur l'accent en mode sombre, on sait qu'on gagne réellement en
+de `56%` à `70%` sur l'accent en mode sombre, on sait qu'on gagne réellement en
 contraste — ce qui est faux en HSL. Sur un produit où l'on enseigne la couleur,
 c'est aussi cohérent avec le discours.
 
 **Règle de contraste** : tout texte ≥ 4,5:1, tout élément d'interface ≥ 3:1,
-**vérifié dans les deux thèmes** par un test automatisé sur les tokens.
+**vérifié dans les deux thèmes** par un test automatisé qui lit directement
+`packages/ui/src/tokens.css` (`contrast.test.ts`).
 
-**Cas particulier** : les couleurs *pédagogiques* (nuanciers, palettes générées,
+> Les valeurs de luminosité ci-dessus ne sont pas choisies à l'œil mais
+> **calculées** pour atteindre le seuil visé. La première version de cette
+> spécification donnait `--accent: 62%` et `--border-strong: 82%` : le test
+> introduit en M0 a montré qu'elles échouaient respectivement à 3,76:1 et
+> 1,70:1. Les valeurs actuelles sont celles qui passent — c'est précisément
+> ce qu'un token vérifié par test apporte face à un token choisi visuellement.
+
+**Cas particulier** : les couleurs _pédagogiques_ (nuanciers, palettes générées,
 matériaux) ne sont pas des tokens d'interface. Elles sont rendues telles quelles
 et toujours accompagnées de leur nom et de leur code — jamais la couleur seule
 comme porteuse d'information (WCAG 1.4.1).
 
 ### 2.2 Typographie
 
-| Rôle | Police | Usage |
-|------|--------|-------|
-| Titres | **Fraunces** (variable, serif) | H1–H2 : donne le ton éditorial/architecture |
-| Interface & corps | **Inter Variable** | Tout le reste, lisibilité maximale |
-| Chiffres & cotes | **JetBrains Mono** | Dimensions, cotations, codes couleur |
+| Rôle              | Police                         | Usage                                       |
+| ----------------- | ------------------------------ | ------------------------------------------- |
+| Titres            | **Fraunces** (variable, serif) | H1–H2 : donne le ton éditorial/architecture |
+| Interface & corps | **Inter Variable**             | Tout le reste, lisibilité maximale          |
+| Chiffres & cotes  | **JetBrains Mono**             | Dimensions, cotations, codes couleur        |
 
 Échelle typographique (ratio 1,25) : 12 · 14 · 16 · 20 · 25 · 31 · 39 · 49 px.
 Corps de texte des leçons : 18 px, hauteur de ligne 1,7, largeur max 68
@@ -134,8 +145,8 @@ Desktop — barre latérale rétractable          Mobile — barre inférieure
 ```
 
 L'assistant IA est un **panneau latéral droit invocable partout** (raccourci
-`⌘K` / `Ctrl+K`), jamais une page séparée : il doit être disponible *pendant*
-la leçon ou *pendant* la conception, sinon il ne sert à rien.
+`⌘K` / `Ctrl+K`), jamais une page séparée : il doit être disponible _pendant_
+la leçon ou _pendant_ la conception, sinon il ne sert à rien.
 
 ---
 
@@ -173,7 +184,7 @@ la leçon ou *pendant* la conception, sinon il ne sert à rien.
 **Justification** : une seule action mise en avant (« Prochaine étape »). Le
 frein n° 1 d'une plateforme d'apprentissage est la charge de décision au
 moment de rouvrir l'application. Le projet personnel est visible en
-permanence — c'est le rappel du *pourquoi* on apprend.
+permanence — c'est le rappel du _pourquoi_ on apprend.
 
 ### 4.2 Carte de parcours
 
@@ -242,6 +253,7 @@ exploration (LEARN-13) permet toujours de consulter en avance.
 ```
 
 **Choix structurants** :
+
 - Une idée par écran, progression visible en tête (7 blocs ici).
 - L'approfondissement est **replié par défaut** (LEARN-04) : le débutant n'est
   pas noyé, l'avancé n'est pas frustré.
@@ -307,7 +319,7 @@ Raccourcis : `V` sélection · `R` pièce · `W` mur · `D` porte · `F` fenêtr
 ```
 
 Chaque problème porte un **numéro placé sur la photo** et une explication du
-*pourquoi* (AI-02). La gravité est indiquée par une couleur **et** un chiffre —
+_pourquoi_ (AI-02). La gravité est indiquée par une couleur **et** un chiffre —
 jamais par la couleur seule.
 
 ---
@@ -316,21 +328,21 @@ jamais par la couleur seule.
 
 Au-delà des primitives shadcn/ui, ces composants sont propres au produit :
 
-| Composant | Rôle |
-|-----------|------|
-| `LessonBlock` | Rendu polymorphe d'un bloc de leçon selon son type |
-| `QuizCard` | 5 variantes de question, retour immédiat avec explication |
-| `FlashcardReview` | Carte retournable, 4 boutons FSRS (À revoir / Difficile / Correct / Facile) |
-| `RoomCanvas` | Le canevas de l'atelier (react-konva) |
-| `PropertyInspector` | Panneau de propriétés contextuel |
-| `BeforeAfterSlider` | Volet glissant, tactile et clavier |
-| `ColorSwatch` | Pastille + nom + code + ratio de contraste |
-| `MaterialCard` | Texture, avantages/inconvénients, budget, entretien |
-| `Moodboard` | Grille libre glisser-déposer, export image |
-| `SeverityBadge` | Gravité (icône + libellé + couleur) |
-| `XpBurst` | Célébration d'XP, désactivée si `prefers-reduced-motion` |
-| `StreakFlame` | Série de jours |
-| `AssistantPanel` | Panneau latéral IA, réponse en streaming, citations |
+| Composant           | Rôle                                                                        |
+| ------------------- | --------------------------------------------------------------------------- |
+| `LessonBlock`       | Rendu polymorphe d'un bloc de leçon selon son type                          |
+| `QuizCard`          | 5 variantes de question, retour immédiat avec explication                   |
+| `FlashcardReview`   | Carte retournable, 4 boutons FSRS (À revoir / Difficile / Correct / Facile) |
+| `RoomCanvas`        | Le canevas de l'atelier (react-konva)                                       |
+| `PropertyInspector` | Panneau de propriétés contextuel                                            |
+| `BeforeAfterSlider` | Volet glissant, tactile et clavier                                          |
+| `ColorSwatch`       | Pastille + nom + code + ratio de contraste                                  |
+| `MaterialCard`      | Texture, avantages/inconvénients, budget, entretien                         |
+| `Moodboard`         | Grille libre glisser-déposer, export image                                  |
+| `SeverityBadge`     | Gravité (icône + libellé + couleur)                                         |
+| `XpBurst`           | Célébration d'XP, désactivée si `prefers-reduced-motion`                    |
+| `StreakFlame`       | Série de jours                                                              |
+| `AssistantPanel`    | Panneau latéral IA, réponse en streaming, citations                         |
 
 ---
 
@@ -362,15 +374,15 @@ généré).
 
 ## 7. États et micro-interactions
 
-| État | Traitement |
-|------|-----------|
-| Chargement | Squelettes qui reprennent la forme finale — jamais de roue centrée |
-| Vide | Illustration + une phrase d'explication + une seule action |
-| Erreur | Ce qui s'est passé + ce que l'utilisateur peut faire + moyen de réessayer |
+| État            | Traitement                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| Chargement      | Squelettes qui reprennent la forme finale — jamais de roue centrée                       |
+| Vide            | Illustration + une phrase d'explication + une seule action                               |
+| Erreur          | Ce qui s'est passé + ce que l'utilisateur peut faire + moyen de réessayer                |
 | IA indisponible | Bandeau discret « l'assistant est momentanément indisponible » ; **le reste fonctionne** |
-| Hors ligne | Bandeau persistant ; les leçons en cache restent lisibles (V2) |
-| Réussite | Coche + XP + son court (désactivable, coupé par défaut) |
-| Échec de quiz | Jamais de rouge agressif : « pas encore », explication, possibilité de refaire |
+| Hors ligne      | Bandeau persistant ; les leçons en cache restent lisibles (V2)                           |
+| Réussite        | Coche + XP + son court (désactivable, coupé par défaut)                                  |
+| Échec de quiz   | Jamais de rouge agressif : « pas encore », explication, possibilité de refaire           |
 
 **Sur le ton** : on ne félicite pas pour un clic. La célébration est réservée
 aux jalons réels (fin de niveau, projet terminé, série de 7 jours). Une

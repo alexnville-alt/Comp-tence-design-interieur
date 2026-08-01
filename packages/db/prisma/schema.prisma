@@ -1,0 +1,173 @@
+// ─────────────────────────────────────────────────────────────────────────
+// Schéma Prisma — Atelier
+//
+// Périmètre M1 : identité, profil, onboarding.
+// Le schéma complet est spécifié dans docs/04-modele-de-donnees.md ; il est
+// livré par module (M2 apporte le curriculum, M3 le SRS, M4 l'atelier…).
+// On ne crée pas trente tables inutilisées : chaque migration accompagne la
+// fonctionnalité qui s'en sert, ce qui garde les migrations relisibles.
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Identité ─────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+
+  /// Haché en Argon2id. `null` pour un compte créé uniquement via OAuth.
+  passwordHash String?
+
+  role Role @default(LEARNER)
+
+  /// Compteur de révocation de session (ADR-0012).
+  /// Chaque jeton émis embarque la valeur courante ; le rejeton est refusé dès
+  /// qu'elle change. Incrémenter ce champ déconnecte immédiatement toutes les
+  /// sessions, sur tous les appareils — c'est ce qui remplace la révocation
+  /// qu'offraient les sessions en base.
+  sessionVersion Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Suppression logique : l'utilisateur disparaît immédiatement de
+  /// l'application, la purge physique est différée (RGPD, AUTH-04).
+  deletedAt DateTime?
+
+  profile             Profile?
+  accounts            Account[]
+  sessions            Session[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([deletedAt])
+}
+
+enum Role {
+  LEARNER
+  ADMIN
+}
+
+// ── Modèles requis par Auth.js v5 (adaptateur Prisma) ────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+/// Conservé bien que la stratégie de session soit `jwt` (ADR-0012) :
+/// l'adaptateur Prisma en a besoin, et le modèle reste en place pour un
+/// éventuel retour aux sessions en base sans migration destructive.
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sessionToken])
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ── Profil et préférences ────────────────────────────────────────────────
+
+model Profile {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Onboarding (AUTH-02) — alimente les recommandations
+  goal          Goal     @default(WHOLE_HOME)
+  housingType   Housing?
+  weeklyMinutes Int      @default(150)
+  startingLevel Int      @default(1)
+
+  // Préférences (AUTH-03)
+  theme         Theme   @default(SYSTEM)
+  locale        String  @default("fr")
+  reducedMotion Boolean @default(false)
+  soundEnabled  Boolean @default(false)
+
+  // Compteurs dénormalisés — lus à chaque affichage du tableau de bord.
+  // Recalculables depuis l'historique : voir docs/04 §3.1.
+  totalXp        Int       @default(0)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+  streakFreezes  Int       @default(1)
+
+  aiMonthlyQuota Int @default(200)
+
+  onboardedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum Goal {
+  WHOLE_HOME
+  SINGLE_ROOM
+  CAREER
+  CURIOSITY
+}
+
+enum Housing {
+  HOUSE
+  APARTMENT
+  STUDIO
+  OTHER
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+// ── Réinitialisation de mot de passe ─────────────────────────────────────
+
+/// Le jeton est stocké **haché** (SHA-256) : une fuite de la base ne permet
+/// donc pas de prendre la main sur un compte. Usage unique, expiration 1 h.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}

@@ -13,12 +13,12 @@ La question est : où vit ce contenu ?
 
 ## Options envisagées
 
-| Option | Verdict |
-|--------|---------|
+| Option                                                | Verdict                                                                                                                                                                                                              |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **En base, édité via une interface d'administration** | Modification sans déploiement. Mais il faut construire un éditeur, une gestion de versions, une prévisualisation, des rôles — soit un CMS complet, c'est-à-dire un second produit à développer et maintenir. Écarté. |
-| **CMS hébergé** (Sanity, Contentful) | Interface immédiate. Mais coût récurrent, contenu hors du dépôt, schémas de blocs à redéfinir dans un langage tiers, et dépendance externe pour la ressource la plus critique. Écarté. |
-| **Markdown pur** | Simple, mais aucun composant riche : impossible de placer un schéma interactif, un comparateur avant/après ou un quiz au fil du texte. Écarté. |
-| **MDX + frontmatter validé** | Contenu versionné, relu en PR, composants riches disponibles. **Retenu.** |
+| **CMS hébergé** (Sanity, Contentful)                  | Interface immédiate. Mais coût récurrent, contenu hors du dépôt, schémas de blocs à redéfinir dans un langage tiers, et dépendance externe pour la ressource la plus critique. Écarté.                               |
+| **Markdown pur**                                      | Simple, mais aucun composant riche : impossible de placer un schéma interactif, un comparateur avant/après ou un quiz au fil du texte. Écarté.                                                                       |
+| **MDX + frontmatter validé**                          | Contenu versionné, relu en PR, composants riches disponibles. **Retenu.**                                                                                                                                            |
 
 ## Décision
 
@@ -50,11 +50,11 @@ Une pièce orientée nord reçoit une lumière froide et constante…
 <Schema src="course-du-soleil" interactive />
 
 <ErreurFrequente>
-Choisir sa peinture sous les néons du magasin.
+  Choisir sa peinture sous les néons du magasin.
 </ErreurFrequente>
 
 <AllerPlusLoin titre="La notion de Kelvin">
-L'échelle de Kelvin mesure…
+  L'échelle de Kelvin mesure…
 </AllerPlusLoin>
 ```
 

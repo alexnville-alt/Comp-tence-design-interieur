@@ -13,24 +13,24 @@ mais « faut-il isoler ces corps de code dans des paquets ? ».
 
 ## Options envisagées
 
-| Option | Verdict |
-|--------|---------|
+| Option                                      | Verdict                                                                                                                                                                                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Une seule application, tout dans `src/`** | Le plus simple au départ. Mais rien n'empêche alors une fonction de géométrie d'importer React ou Prisma, et la frontière disparaît en quelques semaines. Les tests métier deviennent lents parce qu'ils tirent tout l'environnement. |
-| **Dépôts séparés + paquets publiés** | Isolation forte, mais versionnage, publication et synchronisation pour un projet à un seul déploiement : coût sans contrepartie. Écarté. |
-| **Monorepo pnpm + Turborepo** | Frontières explicites, imports vérifiés par l'outil, cache de tâches. **Retenu.** |
+| **Dépôts séparés + paquets publiés**        | Isolation forte, mais versionnage, publication et synchronisation pour un projet à un seul déploiement : coût sans contrepartie. Écarté.                                                                                              |
+| **Monorepo pnpm + Turborepo**               | Frontières explicites, imports vérifiés par l'outil, cache de tâches. **Retenu.**                                                                                                                                                     |
 
 ## Décision
 
 **pnpm workspaces + Turborepo**, avec cinq paquets :
 
-| Paquet | Contenu | Peut importer |
-|--------|---------|---------------|
-| `apps/web` | Next.js | tout |
-| `packages/domain` | Règles métier pures | **rien** (hors `zod`) |
-| `packages/ai` | Port + adaptateurs + prompts | `domain` |
-| `packages/db` | Prisma, migrations, seed | `domain` |
-| `packages/ui` | Tokens, composants partagés | — |
-| `packages/config` | ESLint, TS, Tailwind partagés | — |
+| Paquet            | Contenu                       | Peut importer         |
+| ----------------- | ----------------------------- | --------------------- |
+| `apps/web`        | Next.js                       | tout                  |
+| `packages/domain` | Règles métier pures           | **rien** (hors `zod`) |
+| `packages/ai`     | Port + adaptateurs + prompts  | `domain`              |
+| `packages/db`     | Prisma, migrations, seed      | `domain`              |
+| `packages/ui`     | Tokens, composants partagés   | —                     |
+| `packages/config` | ESLint, TS, Tailwind partagés | —                     |
 
 La contrainte réellement structurante est la ligne « `packages/domain` ne peut
 rien importer ». Ce n'est pas une convention à respecter par discipline : c'est

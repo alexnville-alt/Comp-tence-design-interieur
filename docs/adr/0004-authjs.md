@@ -1,6 +1,12 @@
 # ADR-0004 — Auth.js v5 avec sessions en base de données
 
-**Statut** : Accepté · **Date** : 2026-07-31
+**Statut** : Accepté, partiellement remplacé · **Date** : 2026-07-31
+
+> ⚠️ **La stratégie de session décrite ici a changé.** Le fournisseur
+> `Credentials` d'Auth.js est incompatible avec les sessions en base : voir
+> [ADR-0012](0012-sessions-jwt-avec-revocation.md), qui conserve l'objectif
+> (révocation immédiate) par un autre moyen. Le reste de cet ADR — choix
+> d'Auth.js, Argon2id, données chez nous — reste valable.
 
 ## Contexte
 
@@ -11,12 +17,12 @@ sensibles — les photos de son domicile.
 
 ## Options envisagées
 
-| Option | Avantages | Inconvénients |
-|--------|-----------|---------------|
-| **Clerk / WorkOS** | Mise en route quasi immédiate, interface soignée | Coût par utilisateur actif ; données d'identité hors de notre base ; dépendance forte à un tiers pour une brique centrale |
-| **Lucia** | Léger, explicite | Le projet a annoncé son arrêt en tant que bibliothèque — mauvais pari long terme |
-| **Supabase Auth** | Complet | Impose l'écosystème Supabase alors qu'on gère déjà PostgreSQL |
-| **Auth.js v5** | Adaptateur Prisma natif, OAuth + Credentials, sessions en base, gratuit, données chez nous | Documentation v5 encore inégale ; le fournisseur Credentials demande d'écrire soi-même le hachage et la vérification |
+| Option             | Avantages                                                                                  | Inconvénients                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Clerk / WorkOS** | Mise en route quasi immédiate, interface soignée                                           | Coût par utilisateur actif ; données d'identité hors de notre base ; dépendance forte à un tiers pour une brique centrale |
+| **Lucia**          | Léger, explicite                                                                           | Le projet a annoncé son arrêt en tant que bibliothèque — mauvais pari long terme                                          |
+| **Supabase Auth**  | Complet                                                                                    | Impose l'écosystème Supabase alors qu'on gère déjà PostgreSQL                                                             |
+| **Auth.js v5**     | Adaptateur Prisma natif, OAuth + Credentials, sessions en base, gratuit, données chez nous | Documentation v5 encore inégale ; le fournisseur Credentials demande d'écrire soi-même le hachage et la vérification      |
 
 ## Décision
 

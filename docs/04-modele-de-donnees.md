@@ -14,11 +14,11 @@
 Les leçons vivent en **MDX dans le dépôt** ; la base ne stocke que des
 métadonnées et un `contentHash`.
 
-*Pourquoi* : le contenu est du texte qui se relit en pull request, se versionne,
+_Pourquoi_ : le contenu est du texte qui se relit en pull request, se versionne,
 se compare et se restaure. Le mettre en base imposerait de construire un CMS —
 c'est-à-dire un deuxième produit. Voir [ADR-0010](adr/0010-contenu-mdx-versionne.md).
 
-*Conséquence* : la progression pointe vers une `Lesson` en base, qui référence
+_Conséquence_ : la progression pointe vers une `Lesson` en base, qui référence
 un fichier par `slug`. Un script de synchronisation vérifie à chaque build que
 tous les slugs référencés existent (échec du build sinon).
 
@@ -27,7 +27,7 @@ tous les slugs référencés existent (échec du build sinon).
 Une version de projet stocke sa scène complète dans un champ `jsonb`
 (`sceneData`), validé par un schéma Zod versionné.
 
-*Pourquoi* : on ne fait jamais de requête SQL du type « tous les canapés à
+_Pourquoi_ : on ne fait jamais de requête SQL du type « tous les canapés à
 moins de 80 cm d'un mur ». On charge **toujours la scène entière** pour la
 dessiner. Un modèle relationnel fin (Wall, Opening, FurnitureInstance,
 Transform…) coûterait des dizaines de jointures à chaque ouverture, imposerait
@@ -35,10 +35,10 @@ une migration à chaque nouvelle propriété géométrique, et rendrait le
 versionnement (SIM-09) inutilement complexe alors qu'un JSONB se duplique en
 une ligne.
 
-*Ce qu'on garde en relationnel* : tout ce qui doit être filtré, agrégé ou
+_Ce qu'on garde en relationnel_ : tout ce qui doit être filtré, agrégé ou
 sécurisé — projets, pièces, versions, ressources, favoris.
 
-*Le garde-fou* : `sceneVersion` (entier) permet des migrations de forme, et le
+_Le garde-fou_ : `sceneVersion` (entier) permet des migrations de forme, et le
 schéma Zod est la source de vérité unique côté client comme serveur.
 
 ### 1.3 Bibliothèque : une table, un discriminant, des attributs typés
@@ -46,14 +46,14 @@ schéma Zod est la source de vérité unique côté client comme serveur.
 Un `LibraryItem` unique avec `category` (enum) et un `attributes` JSONB dont le
 schéma Zod dépend de la catégorie.
 
-*Pourquoi pas une table par catégorie* : 15 tables presque identiques
+_Pourquoi pas une table par catégorie_ : 15 tables presque identiques
 (description, avantages, inconvénients, budget, entretien…), 15 requêtes à
 unir pour une recherche transverse, et une migration à chaque nouvelle
 catégorie. Les champs communs — qui portent l'essentiel de la valeur
 pédagogique — sont en colonnes ; seul le spécifique (dureté d'une pierre,
 indice de rendu de couleur d'un luminaire) va en JSONB.
 
-*Le compromis assumé* : on ne peut pas indexer nativement les attributs
+_Le compromis assumé_ : on ne peut pas indexer nativement les attributs
 spécifiques. Acceptable : les filtres de la V1 (budget, pièce, style,
 entretien) portent tous sur des colonnes réelles.
 
@@ -739,41 +739,58 @@ Source de vérité : `packages/domain/geometry/scene.schema.ts`.
 export const SceneSchema = z.object({
   version: z.literal(1),
   unit: z.literal("cm"),
-  walls: z.array(z.object({
-    id: z.string(),
-    a: Point, b: Point,            // extrémités en cm, repère pièce
-    thickness: z.number().default(10),
-    structural: z.boolean().default(false),  // déclaratif → déclenche un avertissement
-  })),
-  openings: z.array(z.object({
-    id: z.string(),
-    wallId: z.string(),
-    kind: z.enum(["door", "window", "opening"]),
-    doorType: z.enum(["hinged", "sliding", "pocket"]).optional(),
-    offsetCm: z.number(),           // distance depuis l'extrémité A du mur
-    widthCm: z.number(),
-    heightCm: z.number(),
-    sillCm: z.number().default(0),  // allège (0 pour une porte)
-    swing: z.enum(["in-left","in-right","out-left","out-right"]).optional(),
-  })),
-  furniture: z.array(z.object({
-    id: z.string(),
-    catalogRef: z.string().optional(),   // → LibraryItem.slug
-    label: z.string(),
-    footprint: z.object({ w: z.number(), d: z.number(), h: z.number() }),
-    position: Point,
-    rotation: z.number().default(0),
-    materialRef: z.string().optional(),
-    clearance: z.object({ front: z.number(), sides: z.number() }).optional(),
-  })),
+  walls: z.array(
+    z.object({
+      id: z.string(),
+      a: Point,
+      b: Point, // extrémités en cm, repère pièce
+      thickness: z.number().default(10),
+      structural: z.boolean().default(false), // déclaratif → déclenche un avertissement
+    }),
+  ),
+  openings: z.array(
+    z.object({
+      id: z.string(),
+      wallId: z.string(),
+      kind: z.enum(["door", "window", "opening"]),
+      doorType: z.enum(["hinged", "sliding", "pocket"]).optional(),
+      offsetCm: z.number(), // distance depuis l'extrémité A du mur
+      widthCm: z.number(),
+      heightCm: z.number(),
+      sillCm: z.number().default(0), // allège (0 pour une porte)
+      swing: z
+        .enum(["in-left", "in-right", "out-left", "out-right"])
+        .optional(),
+    }),
+  ),
+  furniture: z.array(
+    z.object({
+      id: z.string(),
+      catalogRef: z.string().optional(), // → LibraryItem.slug
+      label: z.string(),
+      footprint: z.object({ w: z.number(), d: z.number(), h: z.number() }),
+      position: Point,
+      rotation: z.number().default(0),
+      materialRef: z.string().optional(),
+      clearance: z.object({ front: z.number(), sides: z.number() }).optional(),
+    }),
+  ),
   finishes: z.object({
-    floor:   FinishRef, ceiling: FinishRef,
-    walls:   z.record(z.string(), FinishRef),  // par mur, défaut global possible
+    floor: FinishRef,
+    ceiling: FinishRef,
+    walls: z.record(z.string(), FinishRef), // par mur, défaut global possible
   }),
-  lighting: z.array(z.object({
-    id: z.string(), kind: z.enum(["ceiling","wall","floor","table","strip"]),
-    position: Point, lumens: z.number().optional(), kelvin: z.number().optional(),
-  })).default([]),
+  lighting: z
+    .array(
+      z.object({
+        id: z.string(),
+        kind: z.enum(["ceiling", "wall", "floor", "table", "strip"]),
+        position: Point,
+        lumens: z.number().optional(),
+        kelvin: z.number().optional(),
+      }),
+    )
+    .default([]),
 });
 ```
 
@@ -788,15 +805,15 @@ désynchronisé.
 
 ## 5. Index et performance
 
-| Requête | Fréquence | Index |
-|---------|-----------|-------|
-| Cartes dues d'un utilisateur | Chaque ouverture | `CardReview(userId, dueAt)` |
-| Progression d'un niveau | Carte de parcours | `LessonProgress(userId, status)` |
-| Historique XP (7 j) | Tableau de bord | `XpEvent(userId, createdAt)` |
-| Recherche bibliothèque | Fréquente | GIN sur `searchVector` (français) |
-| Similarité bibliothèque (RAG) | Chaque appel IA | HNSW sur `embedding` |
-| Quota IA du mois | Avant chaque appel | `AiUsage(userId, createdAt)` |
-| Versions d'une pièce | Ouverture atelier | `RoomVersion(roomId, createdAt)` |
+| Requête                       | Fréquence          | Index                             |
+| ----------------------------- | ------------------ | --------------------------------- |
+| Cartes dues d'un utilisateur  | Chaque ouverture   | `CardReview(userId, dueAt)`       |
+| Progression d'un niveau       | Carte de parcours  | `LessonProgress(userId, status)`  |
+| Historique XP (7 j)           | Tableau de bord    | `XpEvent(userId, createdAt)`      |
+| Recherche bibliothèque        | Fréquente          | GIN sur `searchVector` (français) |
+| Similarité bibliothèque (RAG) | Chaque appel IA    | HNSW sur `embedding`              |
+| Quota IA du mois              | Avant chaque appel | `AiUsage(userId, createdAt)`      |
+| Versions d'une pièce          | Ouverture atelier  | `RoomVersion(roomId, createdAt)`  |
 
 Estimation de volumétrie à 1 000 utilisateurs actifs : `CardReview` ~600 k
 lignes, `XpEvent` ~2 M, `AiUsage` ~200 k/mois. Aucun partitionnement nécessaire
@@ -807,15 +824,15 @@ sont les premiers candidats à un archivage glissant.
 
 ## 6. Données de départ (seed)
 
-| Table | Volume V1 | Source |
-|-------|-----------|--------|
+| Table                          | Volume V1      | Source                                      |
+| ------------------------------ | -------------- | ------------------------------------------- |
 | `Level` / `Chapter` / `Lesson` | 15 / ~45 / ~90 | Synchronisation depuis `content/niveaux/**` |
-| `Exercise` | ~350 | Frontmatter MDX des leçons |
-| `Card` | ~450 | Frontmatter MDX (`cards:`) |
-| `LibraryItem` | ≥ 300 | `content/bibliotheque/**` |
-| `LibraryRelation` | ~900 | Déclarées dans le frontmatter des fiches |
-| `Badge` | ~30 | `packages/domain/curriculum/badges.ts` |
-| `Project` (modèles) | 8 | Pièces types pour les exercices |
+| `Exercise`                     | ~350           | Frontmatter MDX des leçons                  |
+| `Card`                         | ~450           | Frontmatter MDX (`cards:`)                  |
+| `LibraryItem`                  | ≥ 300          | `content/bibliotheque/**`                   |
+| `LibraryRelation`              | ~900           | Déclarées dans le frontmatter des fiches    |
+| `Badge`                        | ~30            | `packages/domain/curriculum/badges.ts`      |
+| `Project` (modèles)            | 8              | Pièces types pour les exercices             |
 
 Le seed est **idempotent** (`upsert` par `slug`) : on peut le rejouer sans
 dupliquer, ce qui en fait aussi le mécanisme de publication du contenu.

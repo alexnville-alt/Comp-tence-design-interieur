@@ -1,0 +1,166 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Tokens de design — Atelier
+   Spécification : docs/03-design-system-ux.md §2
+
+   Les couleurs sont en OKLCH parce que sa luminosité est perceptuellement
+   uniforme : passer l'accent de 56 % à 70 % en mode sombre garantit un gain
+   de contraste réel, ce qui n'est pas vrai en HSL. Sur un produit qui
+   enseigne la couleur, la cohérence entre le discours et l'implémentation
+   compte aussi.
+
+   ⚠️ Toute modification d'une valeur ci-dessous est vérifiée par
+   `contrast.test.ts`, qui lit ce fichier directement. Les valeurs de
+   luminosité ne sont pas esthétiques mais calculées : l'accent clair est à
+   56 % parce qu'au-delà il ne porte plus de texte blanc au ratio 4,5:1.
+
+   ⚠️ N'appliquez JAMAIS `opacity` à du texte pour le rendre secondaire.
+   L'opacité mélange la couleur avec l'arrière-plan et détruit le contraste
+   quel que soit le token utilisé : `--text-muted` à 60 % d'opacité tombe à
+   2,35:1. Pour un état atténué ou désactivé, utilisez `--text-muted` tel quel
+   et signalez l'état autrement (icône, libellé) — jamais par la seule
+   transparence, ni par la seule couleur.
+
+   Les valeurs sont exposées comme variables CSS natives : basculer de thème
+   est un simple changement d'attribut, sans classes dupliquées.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Rayons et ombres */
+  --radius-atelier: 0.75rem;
+
+  /* Typographie */
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: light;
+
+  /* Neutres — base chaude (teinte ~90), volontairement pas de gris bleuté :
+     l'interface doit se sentir accueillante, pas clinique. */
+  --bg: oklch(99% 0.004 90);
+  --surface: oklch(97% 0.006 90);
+  --surface-raised: oklch(100% 0 0);
+  --border: oklch(90% 0.008 90);
+  --border-strong: oklch(62% 0.013 90);
+  --text: oklch(22% 0.012 60);
+  --text-muted: oklch(46% 0.011 60);
+
+  /* Accent unique — terracotta. Une seule couleur d'accent : l'interface est
+     un cadre neutre au service d'images colorées (docs/03 §1). */
+  --accent: oklch(56% 0.15 42);
+  --accent-hover: oklch(50% 0.152 42);
+  --accent-fg: oklch(99% 0.004 90);
+  --accent-subtle: oklch(95% 0.028 42);
+  /* Texte d'accent POSÉ SUR --accent-subtle (état actif de la navigation).
+     L'accent standard n'atteint que 4,25:1 sur ce fond teinté : il faut une
+     variante plus sombre. C'est la seule raison d'être de ce token. */
+  --accent-strong: oklch(52% 0.152 42);
+
+  /* Sémantiques */
+  --success: oklch(60% 0.13 150);
+  --success-subtle: oklch(95% 0.03 150);
+  --warning: oklch(72% 0.14 75);
+  --warning-subtle: oklch(96% 0.04 75);
+  --danger: oklch(58% 0.17 27);
+  --danger-subtle: oklch(95% 0.03 27);
+  --info: oklch(60% 0.11 240);
+  --info-subtle: oklch(95% 0.03 240);
+
+  --ring: var(--accent);
+  --shadow-1: 0 1px 2px oklch(20% 0.01 60 / 0.06);
+  --shadow-2: 0 4px 16px oklch(20% 0.01 60 / 0.08);
+}
+
+/* Le sélecteur d'attribut doit l'emporter sur la préférence système dans les
+   deux sens : un utilisateur qui force le mode clair sur un système sombre
+   doit obtenir le mode clair. D'où la règle explicite ci-dessous. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: oklch(17% 0.01 60);
+  --surface: oklch(21% 0.012 60);
+  --surface-raised: oklch(25% 0.012 60);
+  --border: oklch(32% 0.012 60);
+  --border-strong: oklch(52% 0.014 60);
+  --text: oklch(95% 0.006 90);
+  --text-muted: oklch(76% 0.011 70);
+
+  /* Accent remonté en luminosité : à 62 % il ne passerait pas le ratio 4,5:1
+     sur un fond sombre. Vérifié par packages/ui/src/contrast.test.ts. */
+  --accent: oklch(70% 0.14 42);
+  --accent-hover: oklch(76% 0.13 42);
+  --accent-fg: oklch(17% 0.01 60);
+  --accent-subtle: oklch(30% 0.045 42);
+  /* En thème sombre l'accent atteint déjà 4,9:1 sur le fond teinté : le token
+     existe pour la symétrie, sa valeur n'a pas besoin d'être différente. */
+  --accent-strong: oklch(70% 0.14 42);
+
+  --success: oklch(72% 0.13 150);
+  --success-subtle: oklch(28% 0.04 150);
+  --warning: oklch(80% 0.13 75);
+  --warning-subtle: oklch(30% 0.04 75);
+  --danger: oklch(70% 0.16 27);
+  --danger-subtle: oklch(28% 0.05 27);
+  --info: oklch(72% 0.11 240);
+  --info-subtle: oklch(28% 0.04 240);
+
+  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.3);
+  --shadow-2: 0 4px 16px oklch(0% 0 0 / 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: oklch(17% 0.01 60);
+    --surface: oklch(21% 0.012 60);
+    --surface-raised: oklch(25% 0.012 60);
+    --border: oklch(32% 0.012 60);
+    --border-strong: oklch(52% 0.014 60);
+    --text: oklch(95% 0.006 90);
+    --text-muted: oklch(76% 0.011 70);
+
+    --accent: oklch(70% 0.14 42);
+    --accent-hover: oklch(76% 0.13 42);
+    --accent-fg: oklch(17% 0.01 60);
+    --accent-subtle: oklch(30% 0.045 42);
+    --accent-strong: oklch(70% 0.14 42);
+
+    --success: oklch(72% 0.13 150);
+    --success-subtle: oklch(28% 0.04 150);
+    --warning: oklch(80% 0.13 75);
+    --warning-subtle: oklch(30% 0.04 75);
+    --danger: oklch(70% 0.16 27);
+    --danger-subtle: oklch(28% 0.05 27);
+    --info: oklch(72% 0.11 240);
+    --info-subtle: oklch(28% 0.04 240);
+
+    --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.3);
+    --shadow-2: 0 4px 16px oklch(0% 0 0 / 0.4);
+  }
+}
+
+/* Respect strict de la préférence système : on supprime tout déplacement et
+   toute parallaxe, on ne conserve que les fondus. Non négociable (docs/03 §2.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Idem lorsque l'utilisateur l'a activé dans son profil (AUTH-03) :
+   la préférence applicative doit avoir le même effet que la préférence système. */
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

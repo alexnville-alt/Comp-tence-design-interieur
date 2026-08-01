@@ -13,11 +13,11 @@ Il faut donc décider **ce qu'on ne fera pas**, pas seulement ce qu'on fera.
 
 ## Options envisagées
 
-| Option | Verdict |
-|--------|---------|
-| **3D complète dès la V1** (three.js / R3F) | Spectaculaire, mais : modélisation des meubles à produire ou acquérir, gestion des matériaux et de l'éclairage, contrôles de caméra, performance mobile, accessibilité quasi impossible. Représente à lui seul plusieurs mois. Écarté pour la V1. |
-| **Intégrer un outil tiers** (iframe d'un service de plan 3D) | Rapide, mais aucun contrôle pédagogique, données hors de notre base, impossible d'y brancher l'analyse de circulation ou la critique IA. Écarté. |
-| **2D canvas + vue isométrique simple** | Couvre l'essentiel de la pédagogie de l'aménagement, reste testable et accessible, laisse la 3D ouverte. **Retenu.** |
+| Option                                                       | Verdict                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **3D complète dès la V1** (three.js / R3F)                   | Spectaculaire, mais : modélisation des meubles à produire ou acquérir, gestion des matériaux et de l'éclairage, contrôles de caméra, performance mobile, accessibilité quasi impossible. Représente à lui seul plusieurs mois. Écarté pour la V1. |
+| **Intégrer un outil tiers** (iframe d'un service de plan 3D) | Rapide, mais aucun contrôle pédagogique, données hors de notre base, impossible d'y brancher l'analyse de circulation ou la critique IA. Écarté.                                                                                                  |
+| **2D canvas + vue isométrique simple**                       | Couvre l'essentiel de la pédagogie de l'aménagement, reste testable et accessible, laisse la 3D ouverte. **Retenu.**                                                                                                                              |
 
 ## Décision
 
@@ -27,21 +27,21 @@ planning le permet. 3D navigable renvoyée en V2.**
 Le raisonnement est pédagogique avant d'être technique : **les décisions
 d'aménagement se prennent en plan.** Circulation, zonage, proportions,
 implantation d'une cuisine, dégagement d'une porte, dimensionnement d'un
-tapis — tout cela se lit et s'enseigne en 2D. La 3D sert à *communiquer* un
-projet, pas à le *concevoir*. Elle est donc utile, mais pas prioritaire.
+tapis — tout cela se lit et s'enseigne en 2D. La 3D sert à _communiquer_ un
+projet, pas à le _concevoir_. Elle est donc utile, mais pas prioritaire.
 
 ### Périmètre géométrique gelé pour la V1
 
-| Autorisé | Exclu |
-|----------|-------|
-| Murs droits, épaisseur paramétrable | Murs courbes, arcs |
-| Pièces rectangulaires puis polygonales | Formes libres, découpes complexes |
-| Un niveau à la fois | Multi-étage, escaliers en volume |
+| Autorisé                                      | Exclu                                 |
+| --------------------------------------------- | ------------------------------------- |
+| Murs droits, épaisseur paramétrable           | Murs courbes, arcs                    |
+| Pièces rectangulaires puis polygonales        | Formes libres, découpes complexes     |
+| Un niveau à la fois                           | Multi-étage, escaliers en volume      |
 | Portes battantes / coulissantes / à galandage | Portes pliantes, verrières sur mesure |
-| Fenêtres rectangulaires avec allège | Fenêtres de toit, baies cintrées |
-| Empreintes de mobilier (boîtes englobantes) | Modèles 3D détaillés |
-| Aplats de couleur et textures répétées | Matériaux physiquement réalistes |
-| Éclairage schématique (position, type) | Simulation photométrique |
+| Fenêtres rectangulaires avec allège           | Fenêtres de toit, baies cintrées      |
+| Empreintes de mobilier (boîtes englobantes)   | Modèles 3D détaillés                  |
+| Aplats de couleur et textures répétées        | Matériaux physiquement réalistes      |
+| Éclairage schématique (position, type)        | Simulation photométrique              |
 
 **Cette liste est contraignante.** Toute demande d'ajout devra soit entrer dans
 la colonne de gauche, soit faire l'objet d'un nouvel ADR qui remplace

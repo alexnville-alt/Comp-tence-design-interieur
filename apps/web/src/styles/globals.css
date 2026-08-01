@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@import "@atelier/ui/tokens.css";
+
+/* Tailwind v4 scanne les sources à la compilation. Les composants partagés
+   vivant hors de cette application, il faut les lui signaler explicitement. */
+@source "../../../../packages/ui/src";
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    /* Un ancrage de défilement doux, sauf si l'utilisateur a demandé
+       la réduction des animations (géré dans tokens.css). */
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    /* `dvh` et non `vh` : sur mobile, `vh` ignore la barre d'adresse
+       rétractable et provoque un décalage au défilement. */
+    min-height: 100dvh;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Anneau de focus homogène sur tout ce qui est atteignable au clavier.
+     `:focus-visible` et non `:focus` : la souris ne déclenche pas l'anneau,
+     le clavier oui. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Le lien d'évitement doit rester invisible tant qu'il n'a pas le focus,
+     sans être retiré de l'ordre de tabulation (`display: none` le
+     supprimerait des lecteurs d'écran). */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+  }
+
+  .skip-link:focus {
+    left: 0.5rem;
+    top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius-atelier);
+  }
+}
+
+@layer utilities {
+  /* Contenu réservé aux lecteurs d'écran. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .prose-lesson {
+    max-width: 68ch;
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+}

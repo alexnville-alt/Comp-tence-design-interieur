@@ -15,12 +15,12 @@ espacée est donc une fonctionnalité centrale, pas un bonus.
 
 ## Options envisagées
 
-| Option | Avantages | Inconvénients |
-|--------|-----------|---------------|
-| **Intervalles fixes** (1 j, 3 j, 7 j, 21 j) | Trivial à implémenter | Ignore la difficulté réelle de chaque carte : on révise trop ce qu'on sait, pas assez ce qu'on rate |
-| **SM-2** (algorithme d'Anki historique) | Très documenté, simple | Conçu en 1987 ; le facteur de facilité est grossier ; sur-révise notoirement |
-| **FSRS-6** | Modèle à deux paramètres (stabilité, difficulté) calibré sur des centaines de millions de révisions réelles ; 20 à 30 % de révisions en moins à rétention égale ; permet de cibler une rétention explicite (ex. 90 %) | Plus complexe ; l'optimisation des paramètres par utilisateur demande du volume |
-| **Service tiers** | Rien à écrire | Données d'apprentissage hors de notre base ; couplage fort ; coût |
+| Option                                      | Avantages                                                                                                                                                                                                             | Inconvénients                                                                                       |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Intervalles fixes** (1 j, 3 j, 7 j, 21 j) | Trivial à implémenter                                                                                                                                                                                                 | Ignore la difficulté réelle de chaque carte : on révise trop ce qu'on sait, pas assez ce qu'on rate |
+| **SM-2** (algorithme d'Anki historique)     | Très documenté, simple                                                                                                                                                                                                | Conçu en 1987 ; le facteur de facilité est grossier ; sur-révise notoirement                        |
+| **FSRS-6**                                  | Modèle à deux paramètres (stabilité, difficulté) calibré sur des centaines de millions de révisions réelles ; 20 à 30 % de révisions en moins à rétention égale ; permet de cibler une rétention explicite (ex. 90 %) | Plus complexe ; l'optimisation des paramètres par utilisateur demande du volume                     |
+| **Service tiers**                           | Rien à écrire                                                                                                                                                                                                         | Données d'apprentissage hors de notre base ; couplage fort ; coût                                   |
 
 ## Décision
 

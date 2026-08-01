@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+
+    // Pas de `rootDir` ni de `outDir` ici : ces chemins se résolvent
+    // relativement à CE fichier, pas au paquet qui l'étend. Les y placer
+    // faisait pointer tous les paquets vers packages/config/src (TS6059).
+    // Nos paquets sont consommés en TypeScript brut via `transpilePackages`
+    // (voir apps/web/next.config.ts) : ils n'émettent rien.
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false
+  }
+}

@@ -71,6 +71,7 @@ de tout le reste dès que le moteur est validé.
 - Validation Zod des variables d'environnement au démarrage
 
 **Critères d'acceptation**
+
 - `pnpm dev` fonctionne à partir d'un clone vierge en moins de 5 minutes
 - La CI passe sur une PR vide (lint, types, tests, build, E2E « la page charge »)
 - La bascule de thème fonctionne sans clignotement au rechargement
@@ -88,6 +89,7 @@ de tout le reste dès que le moteur est validé.
 - Coquille applicative : barre latérale desktop, barre inférieure mobile
 
 **Critères d'acceptation**
+
 - E2E : inscription → onboarding → tableau de bord vide, en un test
 - Tentative d'accès à une route protégée sans session → redirection
 - L'export contient toutes les tables liées à l'utilisateur
@@ -109,6 +111,7 @@ de tout le reste dès que le moteur est validé.
 - **4 leçons réelles complètes** du niveau 1 (référence de qualité)
 
 **Critères d'acceptation**
+
 - Ajouter une leçon = créer un `.mdx` et lancer le seed. Rien d'autre.
 - Un frontmatter invalide fait échouer le build avec un message exploitable
 - Quitter une leçon au bloc 3 et revenir rouvre au bloc 3
@@ -119,7 +122,7 @@ de tout le reste dès que le moteur est validé.
 
 ### M3 — Quiz, exercices, répétition espacée
 
-- 5 types de quiz + correction immédiate avec explication du *pourquoi*
+- 5 types de quiz + correction immédiate avec explication du _pourquoi_
 - Exercices interactifs : palette, choix de matériau, points cliquables
 - Évaluation de fin de niveau avec seuil et déverrouillage
 - FSRS-6 dans `packages/domain/srs`, testé unitairement (≥ 95 %)
@@ -127,6 +130,7 @@ de tout le reste dès que le moteur est validé.
 - Génération automatique des cartes depuis le frontmatter des leçons
 
 **Critères d'acceptation**
+
 - Les tests FSRS reproduisent les intervalles de référence de l'algorithme
 - Une session de révision de 20 cartes se fait entièrement au clavier
 - Échouer une évaluation ne verrouille rien et propose une remédiation ciblée
@@ -147,6 +151,7 @@ de tout le reste dès que le moteur est validé.
 - Accessibilité canevas : arbre DOM parallèle + manipulation clavier complète
 
 **Critères d'acceptation**
+
 - 60 fps avec 150 objets sur un portable milieu de gamme
 - La géométrie est testée unitairement sans navigateur (`packages/domain/geometry`)
 - Une pièce complète se construit **entièrement au clavier**
@@ -166,6 +171,7 @@ de tout le reste dès que le moteur est validé.
 - `AiUsage` : quotas, coûts, tableau d'administration
 
 **Critères d'acceptation**
+
 - Tests de contrat passant à l'identique sur l'adaptateur réel et le factice
 - Premier token affiché en < 2 s (p95, mesuré)
 - Une question sur un mur porteur déclenche le renvoi vers un professionnel
@@ -185,10 +191,11 @@ de tout le reste dès que le moteur est validé.
 - Passerelle « ouvrir dans l'atelier »
 
 **Critères d'acceptation**
+
 - Une photo de 12 Mo est traitée sans erreur ni dépassement de délai
 - Les coordonnées GPS sont effacées avant tout stockage (test dédié)
 - Réanalyser la même image ne déclenche aucun appel IA
-- Chaque problème remonté comporte un *pourquoi* non générique
+- Chaque problème remonté comporte un _pourquoi_ non générique
 - Une photo non pertinente (paysage) est détectée et signalée poliment
 
 ---
@@ -203,6 +210,7 @@ de tout le reste dès que le moteur est validé.
 - Indexation vectorielle pour le RAG
 
 **Critères d'acceptation**
+
 - La recherche répond en < 150 ms sur 300 fiches
 - Chaque fiche a description, avantages, inconvénients, budget, entretien,
   associations et erreurs — vérifié par un test de complétude sur le corpus
@@ -218,6 +226,7 @@ de tout le reste dès que le moteur est validé.
 - Matériaux compatibles, plan d'éclairage, accessoires, végétaux (exposition)
 
 **Critères d'acceptation**
+
 - Tout élément généré est relié à une fiche bibliothèque quand elle existe
 - Une palette générée respecte les contrastes annoncés (test automatisé)
 - Un moodboard s'exporte en PNG fidèle au rendu écran
@@ -232,6 +241,7 @@ de tout le reste dès que le moteur est validé.
 - Recommandations personnalisées
 
 **Critères d'acceptation**
+
 - Les règles XP et badges sont pures et testées, sans accès base
 - La série résiste aux changements de fuseau horaire (test dédié)
 - Le temps mesuré exclut les périodes d'inactivité (test avec onglet caché)
@@ -248,6 +258,7 @@ de tout le reste dès que le moteur est validé.
 - Export dossier PDF
 
 **Critères d'acceptation**
+
 - Un plan calibré donne des mesures justes à ±2 % (test avec plan de référence)
 - L'IA se souvient des contraintes énoncées lors des sessions précédentes
 - L'export PDF contient plans, moodboards, listes et budget
@@ -264,6 +275,7 @@ Exécuté **en parallèle** dès M3 validé.
 - Défis hebdomadaires
 
 **Critères d'acceptation**
+
 - Chaque leçon respecte le gabarit et passe la validation de frontmatter
 - Chaque niveau a une évaluation finale calibrée
 - Relecture croisée : cohérence du vocabulaire d'un niveau à l'autre
@@ -281,6 +293,7 @@ Exécuté **en parallèle** dès M3 validé.
 - Documentation d'exploitation
 
 **Critères d'acceptation**
+
 - Tous les budgets de performance tenus sur les 10 pages clés
 - Zéro violation axe critique/sérieuse
 - Une restauration de sauvegarde est effectuée avec succès en conditions réelles

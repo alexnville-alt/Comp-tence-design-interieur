@@ -15,12 +15,12 @@ atteinte grave à la vie privée.
 
 ## Options envisagées
 
-| Option | Verdict |
-|--------|---------|
-| **Stocker en base (`bytea`)** | Simple à sauvegarder, mais fait exploser la taille de la base et les temps de restauration ; PostgreSQL n'est pas un serveur de fichiers. Écarté. |
-| **Système de fichiers local** | Empêche tout déploiement multi-instance et impose une gestion manuelle des sauvegardes. Écarté. |
+| Option                                               | Verdict                                                                                                                                                            |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Stocker en base (`bytea`)**                        | Simple à sauvegarder, mais fait exploser la taille de la base et les temps de restauration ; PostgreSQL n'est pas un serveur de fichiers. Écarté.                  |
+| **Système de fichiers local**                        | Empêche tout déploiement multi-instance et impose une gestion manuelle des sauvegardes. Écarté.                                                                    |
 | **Service d'images tiers** (Cloudinary, Uploadthing) | Transformations d'images incluses, mais coût au volume et surtout des photos de domicile confiées à un acteur supplémentaire. Écarté par principe de minimisation. |
-| **S3-compatible, bucket privé** | Standard, portable, peu coûteux, contrôle total des accès. **Retenu.** |
+| **S3-compatible, bucket privé**                      | Standard, portable, peu coûteux, contrôle total des accès. **Retenu.**                                                                                             |
 
 ## Décision
 

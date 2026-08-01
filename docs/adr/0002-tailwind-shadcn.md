@@ -14,12 +14,12 @@ gestion des thèmes ne peut pas être approximative.
 
 ## Options envisagées
 
-| Option | Avantages | Inconvénients |
-|--------|-----------|---------------|
-| **MUI / Mantine / Chakra** | Très complet immédiatement | Identité visuelle imposée, coûteuse à effacer ; bundle lourd ; personnalisation en lutte contre le thème |
-| **CSS Modules + composants maison** | Contrôle total | Il faut réimplémenter l'accessibilité de chaque composant — plusieurs semaines et des bugs subtils garantis |
-| **Tailwind + Radix brut** | Léger, accessible | Aucun composant prêt : beaucoup de câblage répétitif |
-| **Tailwind v4 + shadcn/ui** | Composants Radix accessibles **copiés dans le dépôt**, donc pleinement modifiables ; tokens en variables CSS natives | Les mises à jour ne sont pas automatiques ; il faut assumer le code copié |
+| Option                              | Avantages                                                                                                            | Inconvénients                                                                                               |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **MUI / Mantine / Chakra**          | Très complet immédiatement                                                                                           | Identité visuelle imposée, coûteuse à effacer ; bundle lourd ; personnalisation en lutte contre le thème    |
+| **CSS Modules + composants maison** | Contrôle total                                                                                                       | Il faut réimplémenter l'accessibilité de chaque composant — plusieurs semaines et des bugs subtils garantis |
+| **Tailwind + Radix brut**           | Léger, accessible                                                                                                    | Aucun composant prêt : beaucoup de câblage répétitif                                                        |
+| **Tailwind v4 + shadcn/ui**         | Composants Radix accessibles **copiés dans le dépôt**, donc pleinement modifiables ; tokens en variables CSS natives | Les mises à jour ne sont pas automatiques ; il faut assumer le code copié                                   |
 
 ## Décision
 

@@ -21,12 +21,12 @@ décider **où** porte l'effort et **comment** on neutralise le non-déterminism
 
 ### 1. La pyramide est volontairement déséquilibrée vers le domaine
 
-| Niveau | Couverture visée | Justification |
-|--------|------------------|---------------|
-| `packages/domain` | **≥ 90 %** | Code pur, rapide à tester, et le plus coûteux en cas de bug |
-| Server Actions / accès données | ~70 % | Testées sur un PostgreSQL jetable (Testcontainers), pas sur un simulacre de Prisma |
-| Composants interactifs | ~60 % | Quiz, exercices, inspecteur de propriétés |
-| E2E | 6 parcours | Ce qui casse le produit s'il tombe |
+| Niveau                         | Couverture visée | Justification                                                                      |
+| ------------------------------ | ---------------- | ---------------------------------------------------------------------------------- |
+| `packages/domain`              | **≥ 90 %**       | Code pur, rapide à tester, et le plus coûteux en cas de bug                        |
+| Server Actions / accès données | ~70 %            | Testées sur un PostgreSQL jetable (Testcontainers), pas sur un simulacre de Prisma |
+| Composants interactifs         | ~60 %            | Quiz, exercices, inspecteur de propriétés                                          |
+| E2E                            | 6 parcours       | Ce qui casse le produit s'il tombe                                                 |
 
 On ne vise **pas** un pourcentage global. Un chiffre unique pousse à tester ce
 qui est facile (rendu de composants triviaux) plutôt que ce qui est risqué.
@@ -60,8 +60,12 @@ comportement souhaité.
 ```ts
 export const fakeAiProvider: AiProvider = {
   async analyzeImage() {
-    return { data: AnalysePhoto.parse(FIXTURE_SALON), usage: ZERO, costEuros: 0,
-             model: "fake" };
+    return {
+      data: AnalysePhoto.parse(FIXTURE_SALON),
+      usage: ZERO,
+      costEuros: 0,
+      model: "fake",
+    };
   },
   // …
 };

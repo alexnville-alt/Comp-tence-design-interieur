@@ -16,12 +16,12 @@ public consulte principalement sur mobile.
 
 ## Options envisagées
 
-| Option | Avantages | Inconvénients |
-|--------|-----------|---------------|
-| **SPA React + Vite + API séparée** | Simple à comprendre, écosystème connu | Tout le JS part au client ; il faut construire et maintenir une API séparée ; SEO et LCP dégradés sur les pages de contenu |
-| **Next.js Pages Router** | Stable, très documenté | Pas de RSC : la page leçon embarque du JS inutile ; streaming laborieux |
-| **Next.js App Router + RSC** | Le contenu est rendu serveur, le JS client est réduit au strict interactif ; Server Actions = mutations typées sans API ; streaming natif adapté à l'IA | Modèle mental serveur/client à maîtriser ; certaines bibliothèques exigent `"use client"` |
-| **Remix / React Router 7** | Excellente gestion des formulaires et du chargement | Écosystème plus restreint ; pas de RSC aussi mature |
+| Option                             | Avantages                                                                                                                                               | Inconvénients                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **SPA React + Vite + API séparée** | Simple à comprendre, écosystème connu                                                                                                                   | Tout le JS part au client ; il faut construire et maintenir une API séparée ; SEO et LCP dégradés sur les pages de contenu |
+| **Next.js Pages Router**           | Stable, très documenté                                                                                                                                  | Pas de RSC : la page leçon embarque du JS inutile ; streaming laborieux                                                    |
+| **Next.js App Router + RSC**       | Le contenu est rendu serveur, le JS client est réduit au strict interactif ; Server Actions = mutations typées sans API ; streaming natif adapté à l'IA | Modèle mental serveur/client à maîtriser ; certaines bibliothèques exigent `"use client"`                                  |
+| **Remix / React Router 7**         | Excellente gestion des formulaires et du chargement                                                                                                     | Écosystème plus restreint ; pas de RSC aussi mature                                                                        |
 
 ## Décision
 

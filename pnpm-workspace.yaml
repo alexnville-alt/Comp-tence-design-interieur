@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Ces paquets compilent du code natif ou exécutent des scripts d'installation.
+# pnpm 10 les bloque par défaut : on les autorise explicitement.
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - "prisma"
+  - "esbuild"
+  - "sharp"
+  - "@node-rs/argon2"

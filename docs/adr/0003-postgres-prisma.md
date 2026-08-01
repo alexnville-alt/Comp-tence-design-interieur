@@ -15,12 +15,12 @@ Les besoins de stockage sont hétérogènes :
 
 ## Options envisagées
 
-| Option | Verdict |
-|--------|---------|
-| **MongoDB** | Le semi-structuré est natif, mais la progression pédagogique est un graphe relationnel dense (utilisateur × leçon × exercice × carte). Les jointures applicatives seraient un coût permanent. Écarté. |
-| **SQLite / Turso** | Excellent pour démarrer, mais pas de recherche vectorielle mature ni de plein texte français correct. Écarté. |
-| **PostgreSQL + Drizzle** | ORM plus fin et plus proche du SQL, très bon. Mais les migrations et l'outillage sont plus artisanaux. |
-| **PostgreSQL + Prisma** | Couvre les quatre besoins avec un seul moteur ; migrations versionnées ; client typé ; `prisma studio` accélère l'inspection quotidienne. **Retenu.** |
+| Option                   | Verdict                                                                                                                                                                                               |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MongoDB**              | Le semi-structuré est natif, mais la progression pédagogique est un graphe relationnel dense (utilisateur × leçon × exercice × carte). Les jointures applicatives seraient un coût permanent. Écarté. |
+| **SQLite / Turso**       | Excellent pour démarrer, mais pas de recherche vectorielle mature ni de plein texte français correct. Écarté.                                                                                         |
+| **PostgreSQL + Drizzle** | ORM plus fin et plus proche du SQL, très bon. Mais les migrations et l'outillage sont plus artisanaux.                                                                                                |
+| **PostgreSQL + Prisma**  | Couvre les quatre besoins avec un seul moteur ; migrations versionnées ; client typé ; `prisma studio` accélère l'inspection quotidienne. **Retenu.**                                                 |
 
 ## Décision
 

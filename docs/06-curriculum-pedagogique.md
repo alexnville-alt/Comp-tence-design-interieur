@@ -1,7 +1,7 @@
 # 06 — Curriculum pédagogique
 
 > **Statut** : v1.0 — en attente de validation
-> Ce document définit *ce qui est enseigné* et *comment*. C'est la spécification
+> Ce document définit _ce qui est enseigné_ et _comment_. C'est la spécification
 > que suivra la rédaction du contenu (module M11).
 
 ---
@@ -10,14 +10,14 @@
 
 ### 1.1 Les six principes retenus, et pourquoi
 
-| Principe | Application concrète dans le produit |
-|----------|--------------------------------------|
-| **Progression en spirale** | Chaque notion revient trois fois : découverte simple (N1–2), application par pièce (N7–12), maîtrise en projet réel (N13–15). La couleur est vue en N3, réappliquée en cuisine en N7, arbitrée sous contrainte budgétaire en N14. |
-| **Répétition espacée** | Les notions factuelles (hauteurs standard, températures de couleur, entretien des matériaux) deviennent des cartes FSRS. On n'apprend pas « 90 cm de plan de travail » en le lisant une fois. |
-| **Charge cognitive maîtrisée** | Une idée par bloc, l'approfondissement replié. Le débutant voit un chemin court ; le curieux déplie. |
-| **Apprentissage par projet** | Chaque phase se termine par un projet complet. On n'accumule pas 15 niveaux de théorie avant de produire quelque chose. |
-| **Pratique délibérée sur l'erreur** | Les blocs « erreur fréquente » ne sont pas décoratifs : ils alimentent des exercices « repérez l'erreur » et des cartes mémoire. On apprend mieux en corrigeant qu'en admirant. |
-| **Transfert immédiat au réel** | Dès le niveau 1, les exercices portent sur **sa propre pièce**, pas sur un exemple abstrait. C'est le principal facteur de rétention du produit. |
+| Principe                            | Application concrète dans le produit                                                                                                                                                                                              |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Progression en spirale**          | Chaque notion revient trois fois : découverte simple (N1–2), application par pièce (N7–12), maîtrise en projet réel (N13–15). La couleur est vue en N3, réappliquée en cuisine en N7, arbitrée sous contrainte budgétaire en N14. |
+| **Répétition espacée**              | Les notions factuelles (hauteurs standard, températures de couleur, entretien des matériaux) deviennent des cartes FSRS. On n'apprend pas « 90 cm de plan de travail » en le lisant une fois.                                     |
+| **Charge cognitive maîtrisée**      | Une idée par bloc, l'approfondissement replié. Le débutant voit un chemin court ; le curieux déplie.                                                                                                                              |
+| **Apprentissage par projet**        | Chaque phase se termine par un projet complet. On n'accumule pas 15 niveaux de théorie avant de produire quelque chose.                                                                                                           |
+| **Pratique délibérée sur l'erreur** | Les blocs « erreur fréquente » ne sont pas décoratifs : ils alimentent des exercices « repérez l'erreur » et des cartes mémoire. On apprend mieux en corrigeant qu'en admirant.                                                   |
+| **Transfert immédiat au réel**      | Dès le niveau 1, les exercices portent sur **sa propre pièce**, pas sur un exemple abstrait. C'est le principal facteur de rétention du produit.                                                                                  |
 
 ### 1.2 Anatomie d'une leçon
 
@@ -42,13 +42,13 @@ de monter jusqu'à un niveau quasi professionnel sans écrire deux parcours.
 Les cas ouverts sont corrigés par l'IA sur un barème explicite, visible par
 l'apprenant **avant** de répondre :
 
-| Critère | Poids |
-|---------|-------|
-| Réponse à la contrainte posée | 30 % |
-| Justification technique (règles invoquées) | 25 % |
-| Cohérence d'ensemble (style, matières, lumière) | 20 % |
-| Faisabilité (budget, mise en œuvre, entretien) | 15 % |
-| Qualité de la présentation (clarté, vocabulaire) | 10 % |
+| Critère                                          | Poids |
+| ------------------------------------------------ | ----- |
+| Réponse à la contrainte posée                    | 30 %  |
+| Justification technique (règles invoquées)       | 25 %  |
+| Cohérence d'ensemble (style, matières, lumière)  | 20 %  |
+| Faisabilité (budget, mise en œuvre, entretien)   | 15 %  |
+| Qualité de la présentation (clarté, vocabulaire) | 10 %  |
 
 La correction rend toujours : la note, deux points forts nommés, deux axes
 d'amélioration actionnables, et la règle à réviser.
@@ -76,7 +76,8 @@ PHASE 4 — LE PROJET RÉEL       N13 · N14 · N15
 ## 3. Les 15 niveaux
 
 ### Niveau 1 — Découverte
-*Phase 1 · ~2 h · 6 leçons · aucun prérequis*
+
+_Phase 1 · ~2 h · 6 leçons · aucun prérequis_
 
 **Objectif** : savoir regarder un espace et nommer ce qu'on y voit.
 
@@ -95,7 +96,8 @@ constitution d'un premier moodboard d'inspiration.
 ---
 
 ### Niveau 2 — Fondamentaux
-*Phase 1 · ~3 h · 7 leçons*
+
+_Phase 1 · ~3 h · 7 leçons_
 
 **Objectif** : les règles de composition qui rendent un espace juste.
 
@@ -115,7 +117,8 @@ premier usage de l'atelier.
 ---
 
 ### Niveau 3 — Couleurs
-*Phase 1 · ~3 h · 7 leçons*
+
+_Phase 1 · ~3 h · 7 leçons_
 
 1. Comment fonctionne la couleur : teinte, saturation, valeur
 2. Le cercle chromatique et les harmonies utiles (les 5 qui servent vraiment)
@@ -133,7 +136,8 @@ couleur selon l'exposition · reconnaître un sous-ton.
 ---
 
 ### Niveau 4 — Lumière
-*Phase 1 · ~3 h · 7 leçons*
+
+_Phase 1 · ~3 h · 7 leçons_
 
 1. Lumière naturelle : orientation, saison, profondeur de pénétration
 2. Les trois couches : générale, fonctionnelle, d'ambiance
@@ -155,7 +159,8 @@ de sa pièce · associer Kelvin ↔ usage (cartes mémoire).
 ---
 
 ### Niveau 5 — Mobilier
-*Phase 2 · ~3 h · 7 leçons*
+
+_Phase 2 · ~3 h · 7 leçons_
 
 1. Anthropométrie : les dimensions du corps humain dictent tout
 2. Dimensions standard à connaître par cœur (assises, tables, plans, passages)
@@ -173,7 +178,8 @@ erreurs de dimensionnement · liste de mobilier chiffrée.
 ---
 
 ### Niveau 6 — Matériaux
-*Phase 2 · ~4 h · 8 leçons*
+
+_Phase 2 · ~4 h · 8 leçons_
 
 1. Lire un matériau : dureté, porosité, toucher, vieillissement
 2. Les bois : essences, massif/placage/panneau, finitions
@@ -195,7 +201,8 @@ matériau ↔ contrainte (pièce humide, passage intense, animaux).
 ---
 
 ### Niveau 7 — Cuisine
-*Phase 3 · ~4 h · 8 leçons*
+
+_Phase 3 · ~4 h · 8 leçons_
 
 1. Le triangle d'activité et ses alternatives modernes (zones)
 2. Implantations : linéaire, L, U, parallèle, îlot — laquelle et pourquoi
@@ -214,7 +221,8 @@ erreurs ergonomiques · concevoir sa cuisine dans l'atelier.
 ---
 
 ### Niveau 8 — Salle de bain
-*Phase 3 · ~3 h · 7 leçons*
+
+_Phase 3 · ~3 h · 7 leçons_
 
 1. Contraintes techniques : évacuations, ventilation, humidité
 2. Volumes de sécurité électrique (notion — l'exécution reste au professionnel)
@@ -232,7 +240,8 @@ dangereuse · sélection de matériaux justifiée.
 ---
 
 ### Niveau 9 — Salon
-*Phase 3 · ~3 h · 7 leçons*
+
+_Phase 3 · ~3 h · 7 leçons_
 
 1. Définir les usages réels (recevoir, TV, lecture, enfants)
 2. Configurations d'assises et distances de conversation
@@ -250,7 +259,8 @@ tapis et assises · gérer un espace ouvert.
 ---
 
 ### Niveau 10 — Chambre
-*Phase 3 · ~2,5 h · 6 leçons*
+
+_Phase 3 · ~2,5 h · 6 leçons_
 
 1. Le sommeil dicte la conception : lumière, acoustique, température
 2. Implantation du lit : les règles et leurs raisons
@@ -266,7 +276,8 @@ dimensionner un rangement.
 ---
 
 ### Niveau 11 — Bureau
-*Phase 3 · ~2,5 h · 6 leçons*
+
+_Phase 3 · ~2,5 h · 6 leçons_
 
 1. Ergonomie : hauteurs, distances écran, assise
 2. Lumière de travail et gestion des reflets
@@ -283,7 +294,8 @@ propre espace de travail.
 ---
 
 ### Niveau 12 — Espaces extérieurs
-*Phase 3 · ~2,5 h · 6 leçons*
+
+_Phase 3 · ~2,5 h · 6 leçons_
 
 1. Prolonger l'intérieur : continuité de sol, de palette, de style
 2. Terrasses et balcons : revêtements, contraintes climatiques
@@ -304,7 +316,8 @@ son propre extérieur.
 ---
 
 ### Niveau 13 — Architecture intérieure
-*Phase 4 · ~4 h · 8 leçons*
+
+_Phase 4 · ~4 h · 8 leçons_
 
 1. Lire un plan d'architecte : conventions, symboles, cotations
 2. Dessiner un plan à l'échelle
@@ -323,7 +336,8 @@ perspective à main levée · proposition de redistribution.
 ---
 
 ### Niveau 14 — Rénovation complète
-*Phase 4 · ~4,5 h · 9 leçons*
+
+_Phase 4 · ~4,5 h · 9 leçons_
 
 1. Diagnostiquer un logement : ce qu'on regarde, dans quel ordre
 2. Ordre des travaux : la séquence qui évite de tout refaire deux fois
@@ -343,7 +357,8 @@ devis · budget de sa propre rénovation.
 ---
 
 ### Niveau 15 — Projet professionnel
-*Phase 4 · ~5 h · 8 leçons*
+
+_Phase 4 · ~5 h · 8 leçons_
 
 1. La méthode complète : brief, relevé, diagnostic, concept, développement
 2. Rédiger un brief et un cahier des charges
@@ -402,19 +417,19 @@ rien de permanent ».
 
 ## 5. Volumétrie cible
 
-| Élément | Quantité V1 |
-|---------|-------------|
-| Niveaux | 15 |
-| Chapitres | ~45 |
-| Leçons | ~92 |
-| Exercices et quiz | ~350 |
-| Cartes mémoire | ~450 |
-| Cas pratiques corrigés par l'IA | ~45 |
-| Projets jalons | 4 |
-| Fiches bibliothèque | ≥ 300 |
-| Études d'intérieurs célèbres | 12 |
-| Défis | 24 (une réserve de 6 mois) |
-| **Durée totale du parcours** | **~50 h de contenu actif** |
+| Élément                         | Quantité V1                |
+| ------------------------------- | -------------------------- |
+| Niveaux                         | 15                         |
+| Chapitres                       | ~45                        |
+| Leçons                          | ~92                        |
+| Exercices et quiz               | ~350                       |
+| Cartes mémoire                  | ~450                       |
+| Cas pratiques corrigés par l'IA | ~45                        |
+| Projets jalons                  | 4                          |
+| Fiches bibliothèque             | ≥ 300                      |
+| Études d'intérieurs célèbres    | 12                         |
+| Défis                           | 24 (une réserve de 6 mois) |
+| **Durée totale du parcours**    | **~50 h de contenu actif** |
 
 À 4 h/semaine, le parcours complet représente environ **3 à 4 mois** — durée
 crédible pour atteindre un niveau quasi professionnel sur un domaine que l'on

@@ -17,11 +17,11 @@ Trois contraintes cadrent le choix :
 
 ## Options envisagées
 
-| Option | Verdict |
-|--------|---------|
-| **Appeler le SDK directement dans les composants** | Le plus rapide à écrire, et le plus coûteux ensuite : SDK dispersé dans tout le code, tests impossibles sans réseau, changement de fournisseur = réécriture générale. Écarté. |
+| Option                                                | Verdict                                                                                                                                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Appeler le SDK directement dans les composants**    | Le plus rapide à écrire, et le plus coûteux ensuite : SDK dispersé dans tout le code, tests impossibles sans réseau, changement de fournisseur = réécriture générale. Écarté.                      |
 | **Utiliser une bibliothèque d'abstraction générique** | Abstraction déjà faite, mais alignée sur le plus petit dénominateur commun : les spécificités qui comptent ici (cache de prompt, `effort`, sorties structurées, vision) sont mal exposées. Écarté. |
-| **Port maison + adaptateurs** | Trois interfaces à écrire et maintenir, mais contrôle total et tests hors ligne. **Retenu.** |
+| **Port maison + adaptateurs**                         | Trois interfaces à écrire et maintenir, mais contrôle total et tests hors ligne. **Retenu.**                                                                                                       |
 
 ## Décision
 
