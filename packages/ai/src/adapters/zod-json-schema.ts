@@ -62,6 +62,20 @@ export function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
           (option) => zodToJsonSchema(option),
         ),
       };
+    // Distinct de ZodUnion dans le typeName interne de Zod — voir la note
+    // équivalente dans `fake-schema.ts`.
+    case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion:
+      return {
+        anyOf: (
+          schema as z.ZodDiscriminatedUnion<
+            string,
+            [
+              z.ZodDiscriminatedUnionOption<string>,
+              ...z.ZodDiscriminatedUnionOption<string>[],
+            ]
+          >
+        )._def.options.map((option) => zodToJsonSchema(option)),
+      };
     case z.ZodFirstPartyTypeKind.ZodArray: {
       const arraySchema = schema as z.ZodArray<z.ZodTypeAny>;
       const result: Record<string, unknown> = {

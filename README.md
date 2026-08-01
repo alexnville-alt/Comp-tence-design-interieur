@@ -18,26 +18,27 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M2**      | Moteur de leçons (MDX, 11 blocs, reprise exacte, carte de parcours)      | ✅ Livrée                                |
 | **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée                                |
 | **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée                                |
-| **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée — **en attente de validation** |
-| M6 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée                                |
+| **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée — **en attente de validation** |
+| M7 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
-`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)` sur la branche
-`claude/interior-design-learning-platform-bam6l6`.
+`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)` sur
+la branche `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M5** — 340 tests unitaires, 39 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 13 écrans/flux, en thème clair et sombre),
+**État à la fin de M6** — 396 tests unitaires, 40 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 15 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
-| Vérification                 | Commande            | Résultat                              |
-| ---------------------------- | ------------------- | ------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 340 ✅ (domaine 208 · IA 53 · app 79) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 39 ✅                                 |
-| Types (6 paquets)            | `pnpm typecheck`    | ✅                                    |
-| Lint (6 paquets)             | `pnpm lint`         | ✅                                    |
-| Format                       | `pnpm format:check` | ✅                                    |
-| Build de production          | `pnpm build`        | ✅ 21 routes                          |
+| Vérification                 | Commande            | Résultat                                      |
+| ---------------------------- | ------------------- | --------------------------------------------- |
+| Tests unitaires              | `pnpm test`         | 396 ✅ (domaine 216 · IA 55 · app 92 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 40 ✅                                         |
+| Types (6 paquets)            | `pnpm typecheck`    | ✅                                            |
+| Lint (6 paquets)             | `pnpm lint`         | ✅                                            |
+| Format                       | `pnpm format:check` | ✅                                            |
+| Build de production          | `pnpm build`        | ✅ 22 routes                                  |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
 lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
@@ -150,10 +151,27 @@ Lire dans cet ordre :
   d'amélioration, une règle à réviser) — un exercice réel dans l'évaluation
   du niveau 1
 
+**Analyse photo (M6)**
+
+- Dépôt direct navigateur → bucket S3-compatible (URL présignée, ADR-0008) :
+  le serveur ne relaie jamais les octets, vérifie les magic bytes après
+  téléchargement, redimensionne à 1568 px et **supprime systématiquement
+  l'EXIF** (coordonnées GPS incluses) avant tout stockage durable
+- Analyse IA structurée : style détecté, proportions, circulation, lumière,
+  problèmes gradués avec repères numérotés positionnés sur l'image et
+  justification systématique (« pourquoi ») — une photo hors sujet (paysage,
+  etc.) est détectée et signalée poliment, sans analyse inventée
+  (`AnalysePhotoSchema`, union discriminée)
+- Cache par SHA-256 : réanalyser une image déjà vue ne déclenche aucun appel
+  IA, quel que soit l'utilisateur qui l'a téléversée en premier
+- Historique des analyses par pièce et passerelle « ouvrir dans l'atelier »
+  vers la pièce correspondante, quand elle existe encore
+
 **Hors périmètre pour l'instant** (modules à venir) : ancrage documentaire du
-chat sur la bibliothèque — RAG (dépend de `LibraryItem`, M7), analyse photo
-(M6), bibliothèque de matériaux/styles (M7), XP/séries/badges (M9) — les
-champs `xpReward` existent en base mais ne sont crédités nulle part avant M9.
+chat sur la bibliothèque — RAG (dépend de `LibraryItem`, M7), bibliothèque de
+matériaux/styles (M7), import de plan (`ProjectAsset`, M10),
+XP/séries/badges (M9) — les champs `xpReward` existent en base mais ne sont
+crédités nulle part avant M9.
 
 ## Démarrage
 

@@ -126,6 +126,25 @@ export function generateFakeValue(schema: z.ZodTypeAny, path = ""): unknown {
         (schema as z.ZodUnion<[z.ZodTypeAny, ...z.ZodTypeAny[]]>)._def.options[0],
         path,
       );
+    // Distinct de ZodUnion dans le typeName interne de Zod, alors que
+    // `z.discriminatedUnion(...)` est la forme la plus naturelle pour une
+    // sortie IA « soit ceci, soit cela » (ex. `AnalysePhotoSchema` — pertinent
+    // ou non) : sans ce cas, `complete()`/`analyzeImage()` échouaient sur
+    // tout schéma construit avec `discriminatedUnion`, trouvé avant l'E2E en
+    // vérifiant les types internes plutôt qu'en le laissant échouer en direct.
+    case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion:
+      return generateFakeValue(
+        (
+          schema as z.ZodDiscriminatedUnion<
+            string,
+            [
+              z.ZodDiscriminatedUnionOption<string>,
+              ...z.ZodDiscriminatedUnionOption<string>[],
+            ]
+          >
+        )._def.options[0],
+        path,
+      );
     case z.ZodFirstPartyTypeKind.ZodArray: {
       const arraySchema = schema as z.ZodArray<z.ZodTypeAny>;
       const length = arrayLengthFor(arraySchema);

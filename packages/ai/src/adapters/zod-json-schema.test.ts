@@ -83,6 +83,30 @@ describe("zodToJsonSchema", () => {
     expect(result).toEqual({ anyOf: [{ const: "a" }, { const: "b" }] });
   });
 
+  it("traduit une union discriminée en « anyOf » (distincte de ZodUnion)", () => {
+    const schema = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), x: z.string() }),
+      z.object({ type: z.literal("b"), y: z.number() }),
+    ]);
+    const result = zodToJsonSchema(schema);
+    expect(result).toEqual({
+      anyOf: [
+        {
+          type: "object",
+          properties: { type: { const: "a" }, x: { type: "string" } },
+          required: ["type", "x"],
+          additionalProperties: false,
+        },
+        {
+          type: "object",
+          properties: { type: { const: "b" }, y: { type: "number" } },
+          required: ["type", "y"],
+          additionalProperties: false,
+        },
+      ],
+    });
+  });
+
   it("traduit un champ nullable en « anyOf » avec le type null", () => {
     const result = zodToJsonSchema(z.string().nullable());
     expect(result).toEqual({ anyOf: [{ type: "string" }, { type: "null" }] });

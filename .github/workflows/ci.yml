@@ -20,6 +20,15 @@ env:
   APP_URL: http://127.0.0.1:3100
   MAIL_TRANSPORT: console
   AI_PROVIDER: fake
+  # Le job e2e démarre un vrai service MinIO sur ce port (voir plus bas) ;
+  # le job qualite n'ouvre jamais de connexion S3 réelle (tests unitaires
+  # uniquement), ces valeurs n'ont donc besoin d'être valides que pour
+  # satisfaire la validation Zod au chargement du module (lib/env.ts).
+  S3_ENDPOINT: http://127.0.0.1:9000
+  S3_REGION: auto
+  S3_BUCKET: atelier
+  S3_ACCESS_KEY_ID: minioadmin
+  S3_SECRET_ACCESS_KEY: minioadmin
 
 jobs:
   qualite:
@@ -63,6 +72,29 @@ jobs:
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U atelier -d atelier"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+      # `minio/minio` (utilisé par docker/compose.yml en local) exige un
+      # argument de commande (`server /data`) que les conteneurs de service
+      # GitHub Actions ne permettent pas de passer. `bitnami/minio` lance le
+      # serveur avec sa commande par défaut et crée le bucket via
+      # MINIO_DEFAULT_BUCKETS — équivalent fonctionnel pour la CI uniquement,
+      # le développement local continue d'utiliser l'image officielle.
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+          MINIO_DEFAULT_BUCKETS: atelier
+          # ADR-0008 : dépôt direct navigateur → bucket (URL présignée) — sans
+          # CORS, le préflight du navigateur bloque la requête avant qu'elle
+          # n'atteigne MinIO. Origine de l'app pendant les E2E (APP_URL ci-dessus).
+          MINIO_API_CORS_ALLOW_ORIGIN: "http://127.0.0.1:3100"
+        ports: ["9000:9000"]
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10

@@ -29,6 +29,11 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      # ADR-0008 : le dépôt de photo se fait directement du navigateur vers ce
+      # bucket (URL présignée) — sans CORS, le préflight du navigateur bloque
+      # la requête avant même qu'elle atteigne MinIO. Origine du serveur de
+      # développement (`next dev`, port par défaut).
+      MINIO_API_CORS_ALLOW_ORIGIN: "http://localhost:3000"
     ports:
       - "9000:9000"
       - "9001:9001"

@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2+M3+M4+M5 : identité, profil, onboarding, curriculum,
+// Périmètre M1+M2+M3+M4+M5+M6 : identité, profil, onboarding, curriculum,
 // leçons, exercices notés, évaluations de fin de niveau, répétition espacée,
-// atelier 2D et couche IA. Le schéma complet est spécifié dans
-// docs/04-modele-de-donnees.md ; il est livré par module (M6 apporte l'analyse
-// photo, M7 la bibliothèque…). On ne crée pas trente tables inutilisées :
-// chaque migration accompagne la fonctionnalité qui s'en sert, ce qui garde
-// les migrations relisibles.
+// atelier 2D, couche IA et analyse photo. Le schéma complet est spécifié dans
+// docs/04-modele-de-donnees.md ; il est livré par module (M7 apporte la
+// bibliothèque…). On ne crée pas trente tables inutilisées : chaque migration
+// accompagne la fonctionnalité qui s'en sert, ce qui garde les migrations
+// relisibles.
 //
 // M3 n'ajoute PAS XpEvent/Badge/UserBadge/StudySession : le crédit XP réel,
 // les séries et les badges sont M9 (gamification). `Lesson.xpReward` et
@@ -23,9 +23,10 @@
 // livraison : pas de `Room.currentVersionId` (la version courante est la
 // plus récente par `createdAt` — historique immotable, « restaurer » ajoute
 // une version plutôt que de réécrire un pointeur) ; pas de `Room.areaM2` ni
-// de `RoomVersion.previewAssetId` (calculés/générés, pas stockés — le
-// stockage objet (`Asset`, ADR-0008) n'est pas encore branché). `JournalEntry`
-// et `Moodboard` restent hors périmètre (M8, M10).
+// de `RoomVersion.previewAssetId` (calculés/générés, pas stockés). `Asset`
+// existe depuis M6, mais seulement pour les photos téléversées à analyser —
+// générer et stocker un aperçu de scène reste un besoin distinct, non traité.
+// `JournalEntry` et `Moodboard` restent hors périmètre (M8, M10).
 // ─────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -77,6 +78,7 @@ model User {
   projects            Project[]
   conversations       AiConversation[]
   aiUsage             AiUsage[]
+  assets              Asset[]
 
   @@index([deletedAt])
 }
@@ -648,4 +650,62 @@ enum AiFeature {
   GRADING
   GENERATOR
   CRITIQUE
+}
+
+// ── Fichiers et analyse photo (M6, docs/04 §3.7, ADR-0008) ────────────────
+
+/// `ProjectAsset` (rattachement d'un fichier à un projet avec calibrage
+/// d'échelle pour les plans importés, docs/04 §3.7) reste hors périmètre M6 :
+/// c'est un besoin du plan importé (PROJ-02), pas de la photo analysée —
+/// même principe que les exclusions précédentes (pas de modèle sans code qui
+/// le remplit).
+model Asset {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       AssetKind
+  /// Clé S3 — jamais une URL publique (ADR-0008).
+  storageKey String    @unique
+  mimeType   String
+  bytes      Int
+  width      Int?
+  height     Int?
+  /// Déduplication + cache d'analyse (ADR-0008) : réanalyser la même image
+  /// ne déclenche aucun appel IA.
+  sha256     String
+  createdAt  DateTime  @default(now())
+
+  analyses PhotoAnalysis[]
+
+  @@index([userId, kind])
+  @@index([sha256])
+}
+
+/// Un seul type utilisé pour l'instant. FLOOR_PLAN et INSPIRATION (M10),
+/// PREVIEW (rattrapage du tradeoff M4 sur `RoomVersion.previewAssetId`) et
+/// AVATAR arriveront avec le code qui les traite — même principe que
+/// `ExerciseType.OPEN_CASE` en M5 : pas de valeur d'enum sans utilisateur.
+enum AssetKind {
+  ROOM_PHOTO
+}
+
+model PhotoAnalysis {
+  id      String  @id @default(cuid())
+  assetId String
+  asset   Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  /// Référence souple vers une pièce de l'atelier, pas une clé étrangère
+  /// (docs/04 §3.7) : une analyse reste consultable même si la pièce qu'elle
+  /// décrivait a depuis été supprimée dans l'atelier.
+  roomId  String?
+
+  /// Conforme à `AnalysePhotoSchema` (Zod, `@atelier/domain`).
+  result        Json
+  model         String
+  /// Rejouabilité : quel prompt a produit ce résultat (docs/04 §3.7).
+  promptVersion String
+  costCents     Int
+  createdAt     DateTime @default(now())
+
+  @@index([assetId, createdAt])
+  @@index([roomId, createdAt])
 }

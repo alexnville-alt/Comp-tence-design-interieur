@@ -55,6 +55,19 @@ describe("generateFakeValue", () => {
     expect(generateFakeValue(z.union([z.literal("a"), z.literal("b")]))).toBe("a");
   });
 
+  it("gère une union discriminée (distincte de ZodUnion) en choisissant la première option", () => {
+    // Régression M6 : `z.discriminatedUnion` a un typeName Zod interne
+    // différent de `z.union` — sans cas dédié, generateFakeValue échouait
+    // sur `AnalysePhotoSchema`.
+    const schema = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), x: z.string() }),
+      z.object({ type: z.literal("b"), y: z.number() }),
+    ]);
+    const value = generateFakeValue(schema) as { type: string };
+    expect(value.type).toBe("a");
+    expect(() => schema.parse(value)).not.toThrow();
+  });
+
   it("gère un tuple", () => {
     const value = generateFakeValue(z.tuple([z.string(), z.number()])) as [
       string,

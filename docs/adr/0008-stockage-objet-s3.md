@@ -71,3 +71,30 @@ la fenêtre.
 **Élevée.** L'API S3 est un standard de fait ; la table `Asset` ne stocke
 qu'une `storageKey`, jamais une URL complète — changer de fournisseur revient à
 copier les objets et à modifier une variable d'environnement.
+
+## Addendum (M6) — CORS : une exigence d'infrastructure, pas un détail du mock
+
+Le dépôt direct navigateur → S3 (étape 4 du flux ci-dessus) ne passe jamais par
+le serveur applicatif — ce qui veut dire que c'est le **bucket S3** qui doit
+répondre correctement au préflight CORS du navigateur, pas Next.js. Ni
+`docker/compose.yml` (développement local) ni le service `minio` de la CI ne
+configuraient de CORS au moment d'écrire le flux de téléversement : le premier
+essai réel (E2E, pas `tsc`) échouait avec une erreur générique côté client,
+sans rien dans les journaux serveur — normal, la requête bloquée ne l'atteint
+jamais. Diagnostiqué en instrumentant temporairement la console et le réseau
+du navigateur dans un test Playwright jetable. Corrigé en ajoutant
+`MINIO_API_CORS_ALLOW_ORIGIN` (variable serveur MinIO, pas une configuration
+par bucket) aux deux services MinIO, réglée sur l'origine de l'app dans chaque
+contexte.
+
+Une fois le CORS résolu, un deuxième symptôme est apparu, plus spécifique :
+le préflight échouait encore, cette fois parce que le SDK AWS v3 ajoute par
+défaut des en-têtes de somme de contrôle (`x-amz-checksum-*`) à toute requête
+signée — sans bénéfice ici puisque le SHA-256 calculé côté serveur après
+téléchargement sert déjà à la fois d'intégrité et de déduplication. Désactivé
+via `requestChecksumCalculation: "WHEN_REQUIRED"` sur le `S3Client`
+(`apps/web/src/lib/storage/s3.ts`).
+
+Même famille de leçon que l'addendum M5 de l'ADR-0005 : un problème
+d'intégration réel, invisible à la compilation, trouvé uniquement en faisant
+réellement transiter un octet du navigateur vers le bucket.

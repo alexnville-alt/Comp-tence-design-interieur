@@ -1,6 +1,11 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { completeOnboarding, signUp } from "./helpers";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PHOTO_FIXTURE = path.join(__dirname, "fixtures", "salon.jpg");
 
 /**
  * Audit d'accessibilité automatisé (docs/02 §7).
@@ -92,6 +97,13 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.getByRole("button", { name: "Créer" }).click();
   await page.waitForURL(/\/atelier\/[a-z0-9]+\/[a-z0-9]+$/);
   await auditer(page, "atelier — éditeur de pièce");
+
+  await page.getByRole("link", { name: "Analyser une photo" }).click();
+  await page.waitForURL(/\/photos$/);
+  await auditer(page, "atelier — téléversement de photo");
+  await page.getByLabel("Analyser une photo de cette pièce").setInputFiles(PHOTO_FIXTURE);
+  await page.waitForURL(/\/photos\/[a-z0-9]+$/, { timeout: 30_000 });
+  await auditer(page, "atelier — analyse photo");
 
   await page.goto("/profil");
   await auditer(page, "profil");

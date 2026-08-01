@@ -53,6 +53,16 @@ const schema = z
 
     AI_PROVIDER: z.enum(["fake", "anthropic"]).default("fake"),
     ANTHROPIC_API_KEY: z.string().optional(),
+
+    // Stockage objet S3-compatible (ADR-0008, M6) : MinIO en développement,
+    // Cloudflare R2 en production. Aucune valeur par défaut — contrairement à
+    // AI_PROVIDER, il n'existe pas de mode « sans stockage » pour l'analyse
+    // photo une fois M6 livré.
+    S3_ENDPOINT: z.string().url("S3_ENDPOINT doit être une URL valide."),
+    S3_REGION: z.string().min(1).default("auto"),
+    S3_BUCKET: z.string().min(1, "S3_BUCKET est requis."),
+    S3_ACCESS_KEY_ID: z.string().min(1, "S3_ACCESS_KEY_ID est requis."),
+    S3_SECRET_ACCESS_KEY: z.string().min(1, "S3_SECRET_ACCESS_KEY est requis."),
   })
   // Une paire OAuth incomplète est presque toujours une erreur de configuration
   // silencieuse : le bouton Google apparaît puis échoue au clic.
@@ -117,6 +127,11 @@ function loadEnv(): Env {
       MAIL_TRANSPORT: "console",
       MAIL_FROM: process.env.MAIL_FROM ?? "Atelier <bonjour@exemple.fr>",
       AI_PROVIDER: "fake",
+      S3_ENDPOINT: process.env.S3_ENDPOINT ?? "http://localhost:9000",
+      S3_REGION: process.env.S3_REGION ?? "auto",
+      S3_BUCKET: process.env.S3_BUCKET ?? "atelier",
+      S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? "build",
+      S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? "build",
     };
   }
 
