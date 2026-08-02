@@ -36,6 +36,8 @@ export async function listProjects(userId: string): Promise<ProjectSummary[]> {
 export interface ProjectDetail {
   id: string;
   name: string;
+  address: string | null;
+  budgetCents: number | null;
   rooms: { id: string; name: string; type: string; status: string }[];
 }
 
@@ -51,6 +53,8 @@ export async function getProjectDetail(
   return {
     id: project.id,
     name: project.name,
+    address: project.address,
+    budgetCents: project.budgetCents,
     rooms: project.rooms.map((r) => ({
       id: r.id,
       name: r.name,
@@ -72,6 +76,7 @@ export interface RoomEditorData {
   projectName: string;
   roomId: string;
   roomName: string;
+  roomStatus: string;
   versions: RoomVersionSummary[];
   currentVersionId: string | null;
   currentScene: Scene;
@@ -100,6 +105,7 @@ export async function getRoomEditorData(
     projectName: room.project.name,
     roomId: room.id,
     roomName: room.name,
+    roomStatus: room.status,
     versions: room.versions.map((v) => ({
       id: v.id,
       label: v.label,

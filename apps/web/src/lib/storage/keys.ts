@@ -12,3 +12,8 @@ import { randomUUID } from "node:crypto";
 export function buildPhotoStorageKey(userId: string): string {
   return `photos/${userId}/${randomUUID()}`;
 }
+
+/** Même principe que `buildPhotoStorageKey` — plans importés et photos de pièce du projet personnel (docs/05 M10). */
+export function buildProjectAssetStorageKey(userId: string): string {
+  return `project-assets/${userId}/${randomUUID()}`;
+}

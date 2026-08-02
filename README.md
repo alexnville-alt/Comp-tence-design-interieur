@@ -22,27 +22,28 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée                                |
 | **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée                                |
 | **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée                                |
-| **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée — **en attente de validation** |
-| M10 → M12   | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée                                |
+| **M10**     | Projet personnel (plan calibré, journal, architecte accompagnateur, PDF) | ✅ Livrée — **en attente de validation** |
+| M11 → M12   | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
 `feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`,
-`feat(m7)`, `feat(m8)`, `feat(m9)` sur la branche
+`feat(m7)`, `feat(m8)`, `feat(m9)`, `feat(m10)` sur la branche
 `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M9** — 495 tests unitaires, 46 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 21 écrans/flux, en thème clair et sombre),
+**État à la fin de M10** — 518 tests unitaires, 47 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 25 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
 | Vérification                 | Commande            | Résultat                                       |
 | ---------------------------- | ------------------- | ---------------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 495 ✅ (domaine 294 · IA 62 · app 106 · ui 33) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 46 ✅                                          |
+| Tests unitaires              | `pnpm test`         | 518 ✅ (domaine 306 · IA 62 · app 117 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 47 ✅                                          |
 | Types (6 paquets)            | `pnpm typecheck`    | ✅                                             |
 | Lint (6 paquets)             | `pnpm lint`         | ✅                                             |
 | Format                       | `pnpm format:check` | ✅                                             |
-| Build de production          | `pnpm build`        | ✅ 30 routes                                   |
+| Build de production          | `pnpm build`        | ✅ 32 routes                                   |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
 lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
@@ -243,8 +244,35 @@ Lire dans cet ordre :
 - Recommandations personnalisées : réviser le thème le plus fragile, reprendre
   un projet resté sans nouvelle version de pièce depuis deux semaines
 
+**Projet personnel (M10)**
+
+- Projet ancré sur un logement réel (adresse libre, budget global en ordre de
+  grandeur) et pièces à état d'avancement suivi (`TO_MEASURE` → `DONE`),
+  modifiable depuis l'éditeur de pièce et visible sur la page projet
+- Import de plan (image — JPEG/PNG/WebP, voir la note ci-dessous) et calibrage
+  par deux points cliqués + une cote réelle connue, précision vérifiée à ±2 %
+  par un test dédié (`packages/domain/src/geometry/calibration.test.ts`) ; le
+  plan calibré s'affiche ensuite comme repère semi-transparent dans l'atelier
+  2D, contre lequel les outils existants (pièce, mobilier) sont utilisés à
+  l'échelle exacte
+- Galerie de photos par pièce avec note libre, distincte de l'analyse IA (M6)
+- Journal de projet (notes, décisions, questions ouvertes, lignes de budget) —
+  c'est aussi la seule mémoire du mode « architecte accompagnateur » : une
+  contrainte n'est retenue par l'IA que si elle a été journalisée, jamais
+  extraite automatiquement d'une conversation passée
+- Mode « architecte accompagnateur » : le chat IA (M5) s'ancre sur un projet
+  plutôt qu'une leçon, avec un prompt système dédié et le journal + les pièces
+  du projet injectés en contexte à chaque message — mêmes garde-fous
+  (sujets à risque, ordre de grandeur budgétaire) que le chat pédagogique
+- Export dossier PDF (`pdf-lib`) : adresse et budget, plan et photos par
+  pièce, liste de mobilier dimensionnée, moodboards redessinés depuis les
+  mêmes données de transform que l'éditeur (pas une capture d'écran) et
+  journal complet
+- Versions et comparateur avant/après : déjà livrés en M4, aucun travail
+  supplémentaire nécessaire pour ce module
+
 **Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
-au sein de M7/M8/M9) :
+au sein de M7/M8/M9/M10) :
 
 - **Corpus de badges partiel** : 16 badges réels contre l'estimation « ~30 »
   de docs/04 §7 (volumétrie) — le mécanisme (schéma de critères, évaluation,
@@ -264,9 +292,12 @@ au sein de M7/M8/M9) :
 - **Images de moodboard** : `LibraryItem.imageAssetId` n'est rempli par
   aucune fiche à ce stade (docs/04 §3.8, pipeline de curation visuelle hors
   périmètre) — les éléments sans image s'affichent avec leur libellé, dans
-  l'éditeur comme à l'export PNG
-- Import de plan (`ProjectAsset`, M10) — le champ existe en base, hors
-  périmètre avant M10
+  l'éditeur, à l'export PNG (M8) et dans le dossier PDF (M10)
+- **Import de plan en PDF** : volontairement limité aux images (JPEG/PNG/WebP,
+  M10) — le `sharp`/libvips de cet environnement n'a pas de lecture PDF, et
+  une dépendance native supplémentaire (`canvas`, pour `pdfjs-dist`) a été
+  jugée trop fragile pour cette livraison ; un plan en PDF doit d'abord être
+  exporté en image avant import (voir la note en tête de `schema.prisma`)
 
 ## Démarrage
 

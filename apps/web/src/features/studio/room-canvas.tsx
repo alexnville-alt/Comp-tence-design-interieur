@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Layer, Line, Rect, Stage, Text } from "react-konva";
+import { Image as KonvaImage, Layer, Line, Rect, Stage, Text } from "react-konva";
 import type Konva from "konva";
 import {
   pointAtOffset,
@@ -12,6 +12,35 @@ import {
 } from "@atelier/domain";
 import { createOpeningOnWall } from "./scene-utils";
 import { useStudioStore } from "./store";
+
+export interface ReferencePlan {
+  readUrl: string;
+  widthPx: number;
+  heightPx: number;
+  cmPerPixel: number;
+}
+
+/**
+ * Charge une image HTML brute pour Konva (`react-konva` n'inclut pas de
+ * chargeur d'image, contrairement à un `<img>` — un paquet de plus n'était
+ * pas nécessaire pour un unique cas d'usage). Se réinitialise si l'URL
+ * change (nouvelle URL présignée après recalibrage, ADR-0008).
+ */
+function useHtmlImage(url: string | null): HTMLImageElement | null {
+  const [image, setImage] = React.useState<HTMLImageElement | null>(null);
+  React.useEffect(() => {
+    if (!url) {
+      setImage(null);
+      return;
+    }
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => setImage(img);
+    img.src = url;
+    return () => setImage(null);
+  }, [url]);
+  return image;
+}
 
 /**
  * Canevas 2D de l'atelier (docs/05 M4, ADR-0006). Chargé uniquement côté
@@ -29,8 +58,13 @@ const MAX_SCALE = 3;
 const STAGE_WIDTH = 900;
 const STAGE_HEIGHT = 560;
 
-export function RoomCanvas() {
+export function RoomCanvas({
+  referencePlan = null,
+}: {
+  referencePlan?: ReferencePlan | null;
+}) {
   const scene = useStudioStore((s) => s.scene);
+  const referenceImage = useHtmlImage(referencePlan?.readUrl ?? null);
   const tool = useStudioStore((s) => s.tool);
   const selectedId = useStudioStore((s) => s.selectedId);
   const gridCm = useStudioStore((s) => s.gridCm);
@@ -121,6 +155,20 @@ export function RoomCanvas() {
       aria-label={`Plan de la pièce, ${scene.walls.length} murs, ${scene.furniture.length} meubles`}
     >
       <Layer>
+        {referencePlan && referenceImage ? (
+          // Le coin supérieur gauche du plan (pixel 0,0) est ancré à
+          // l'origine (0,0) de la scène — convention simple et documentée
+          // (docs/05 M10) : dessiner en s'alignant visuellement dessus place
+          // les murs à l'échelle réelle, sans exiger un second calibrage de
+          // position en plus de celui d'échelle.
+          <KonvaImage
+            image={referenceImage}
+            width={referencePlan.widthPx * referencePlan.cmPerPixel * PX_PER_CM}
+            height={referencePlan.heightPx * referencePlan.cmPerPixel * PX_PER_CM}
+            opacity={0.55}
+            listening={false}
+          />
+        ) : null}
         <GridLines gridCm={gridCm} />
         {scene.walls.map((wall) => (
           <Line

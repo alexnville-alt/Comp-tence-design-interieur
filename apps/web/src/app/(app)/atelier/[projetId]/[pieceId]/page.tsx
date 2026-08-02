@@ -5,6 +5,9 @@ import { requireOnboardedUser } from "@/lib/auth";
 import { getRoomEditorData } from "@/features/studio/data";
 import { StudioEditor } from "@/features/studio/studio-editor";
 import { HeartbeatTracker } from "@/features/progression/heartbeat-tracker";
+import { getRoomPlan } from "@/features/project-personal/data";
+import { RoomStatusSelect } from "@/features/studio/room-status-select";
+import type { ROOM_STATUSES } from "@/features/studio/room-statuses";
 
 export const metadata: Metadata = { title: "Pièce — Atelier" };
 
@@ -18,6 +21,17 @@ export default async function RoomEditorPage({
   const data = await getRoomEditorData(user.id, projetId, pieceId);
   if (!data) notFound();
 
+  const plan = await getRoomPlan(user.id, pieceId);
+  const referencePlan =
+    plan?.calibration && plan.width && plan.height
+      ? {
+          readUrl: plan.readUrl,
+          widthPx: plan.width,
+          heightPx: plan.height,
+          cmPerPixel: plan.calibration.cmPerPixel,
+        }
+      : null;
+
   return (
     <div className="space-y-4 px-4 py-6 lg:px-6">
       <p className="text-sm text-[var(--text-muted)]">
@@ -27,7 +41,23 @@ export default async function RoomEditorPage({
       </p>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl">{data.roomName}</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <RoomStatusSelect
+            roomId={data.roomId}
+            initialStatus={data.roomStatus as (typeof ROOM_STATUSES)[number]}
+          />
+          <Link
+            href={`/atelier/${data.projectId}/${data.roomId}/plan`}
+            className="text-sm text-[var(--accent)] underline underline-offset-4"
+          >
+            Plan de référence
+          </Link>
+          <Link
+            href={`/atelier/${data.projectId}/${data.roomId}/photos-projet`}
+            className="text-sm text-[var(--accent)] underline underline-offset-4"
+          >
+            Photos de la pièce
+          </Link>
           <Link
             href={`/atelier/${data.projectId}/${data.roomId}/mobilier`}
             className="text-sm text-[var(--accent)] underline underline-offset-4"
@@ -49,6 +79,7 @@ export default async function RoomEditorPage({
         initialScene={data.currentScene}
         initialVersions={data.versions}
         initialCurrentVersionId={data.currentVersionId}
+        referencePlan={referencePlan}
       />
     </div>
   );

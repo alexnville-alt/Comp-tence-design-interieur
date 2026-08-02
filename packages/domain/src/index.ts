@@ -24,3 +24,4 @@ export * from "./ai/photo-analysis";
 export * from "./library";
 export * from "./generators";
 export * from "./progression";
+export * from "./project";

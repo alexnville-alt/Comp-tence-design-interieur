@@ -6,7 +6,9 @@ import { aiProvider } from "@/lib/ai/provider";
 import { checkAiQuota, recordAiUsage } from "@/lib/ai/usage";
 import {
   CHAT_SYSTEM_PROMPT,
+  PROJECT_SYSTEM_PROMPT,
   buildLessonContextMessage,
+  buildProjectContextMessage,
   toChatHistory,
 } from "@/features/ai/chat";
 
@@ -26,6 +28,7 @@ export const dynamic = "force-dynamic";
 const RequestSchema = z.object({
   conversationId: z.string().cuid().optional(),
   lessonId: z.string().cuid().optional(),
+  projectId: z.string().cuid().optional(),
   message: z.string().trim().min(1).max(4000),
 });
 
@@ -44,13 +47,32 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return new Response("Requête invalide.", { status: 400 });
   }
-  const { conversationId: existingConversationId, lessonId, message } = parsed.data;
+  const {
+    conversationId: existingConversationId,
+    lessonId,
+    projectId,
+    message,
+  } = parsed.data;
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (data: unknown) => controller.enqueue(sseEvent(data));
 
       try {
+        // Jamais confiance dans un projectId venu du client sans vérifier
+        // qu'il appartient bien à l'utilisateur courant — avant même de
+        // créer la conversation (docs/02 §6, `assertOwnership`).
+        if (projectId) {
+          const owned = await prisma.project.findFirst({
+            where: { id: projectId, userId: user.id },
+            select: { id: true },
+          });
+          if (!owned) {
+            send({ type: "error", reason: "not_found", message: "Projet introuvable." });
+            return;
+          }
+        }
+
         // Jamais confiance dans un conversationId venu du client sans
         // vérifier qu'il appartient bien à l'utilisateur courant.
         const conversation = existingConversationId
@@ -58,7 +80,14 @@ export async function POST(request: Request) {
               where: { id: existingConversationId, userId: user.id },
             })
           : await prisma.aiConversation.create({
-              data: { userId: user.id, ...(lessonId ? { context: { lessonId } } : {}) },
+              data: {
+                userId: user.id,
+                ...(lessonId
+                  ? { context: { lessonId } }
+                  : projectId
+                    ? { context: { projectId } }
+                    : {}),
+              },
             });
 
         if (!conversation) {
@@ -114,7 +143,7 @@ export async function POST(request: Request) {
           return;
         }
 
-        const [history, lesson] = await Promise.all([
+        const [history, lesson, project] = await Promise.all([
           prisma.aiMessage.findMany({
             where: { conversationId: conversation.id },
             orderBy: { createdAt: "asc" },
@@ -126,6 +155,19 @@ export async function POST(request: Request) {
                 select: { title: true, summary: true },
               })
             : Promise.resolve(null),
+          projectId
+            ? prisma.project.findFirst({
+                where: { id: projectId, userId: user.id },
+                select: {
+                  name: true,
+                  rooms: { select: { name: true, type: true, status: true } },
+                  journal: {
+                    orderBy: { createdAt: "desc" },
+                    select: { title: true, kind: true, body: true },
+                  },
+                },
+              })
+            : Promise.resolve(null),
         ]);
 
         await prisma.aiMessage.create({
@@ -134,6 +176,15 @@ export async function POST(request: Request) {
 
         const messages = [
           ...(lesson ? [buildLessonContextMessage(lesson)] : []),
+          ...(project
+            ? [
+                buildProjectContextMessage({
+                  projectName: project.name,
+                  rooms: project.rooms,
+                  journalEntries: project.journal,
+                }),
+              ]
+            : []),
           ...toChatHistory(history),
           { role: "user" as const, content: message },
         ];
@@ -144,7 +195,7 @@ export async function POST(request: Request) {
 
         try {
           for await (const chunk of aiProvider.streamChat({
-            system: CHAT_SYSTEM_PROMPT,
+            system: project ? PROJECT_SYSTEM_PROMPT : CHAT_SYSTEM_PROMPT,
             messages,
             effort: "medium",
           })) {

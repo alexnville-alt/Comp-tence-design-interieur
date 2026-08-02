@@ -7,6 +7,7 @@ import { AccessibleSceneList } from "./accessible-scene-list";
 import { CirculationAlerts } from "./circulation-alerts";
 import { PropertyInspector } from "./property-inspector";
 import type { RoomVersionSummary } from "./data";
+import type { ReferencePlan } from "./room-canvas";
 import {
   KEYBOARD_STEP_CM,
   KEYBOARD_STEP_LARGE_CM,
@@ -46,12 +47,15 @@ export function StudioEditor({
   initialScene,
   initialVersions,
   initialCurrentVersionId,
+  referencePlan = null,
 }: {
   roomId: string;
   initialScene: Scene;
   initialVersions: RoomVersionSummary[];
   initialCurrentVersionId: string | null;
+  referencePlan?: ReferencePlan | null;
 }) {
+  const [showReferencePlan, setShowReferencePlan] = React.useState(true);
   const loadScene = useStudioStore((s) => s.loadScene);
   const scene = useStudioStore((s) => s.scene);
   const setTool = useStudioStore((s) => s.setTool);
@@ -154,8 +158,18 @@ export function StudioEditor({
       </aside>
 
       <div className="min-w-0 flex-1 space-y-4">
+        {referencePlan ? (
+          <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+            <input
+              type="checkbox"
+              checked={showReferencePlan}
+              onChange={(e) => setShowReferencePlan(e.target.checked)}
+            />
+            Afficher le plan de référence
+          </label>
+        ) : null}
         <div className="overflow-auto rounded-[var(--radius-atelier)] border border-[var(--border)]">
-          <RoomCanvas />
+          <RoomCanvas referencePlan={showReferencePlan ? referencePlan : null} />
         </div>
         <VersionBar
           roomId={roomId}

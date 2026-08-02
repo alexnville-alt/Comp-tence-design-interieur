@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { CHAT_SYSTEM_PROMPT, buildLessonContextMessage, toChatHistory } from "./chat";
+import {
+  CHAT_SYSTEM_PROMPT,
+  PROJECT_SYSTEM_PROMPT,
+  buildLessonContextMessage,
+  buildProjectContextMessage,
+  toChatHistory,
+} from "./chat";
 
 describe("CHAT_SYSTEM_PROMPT", () => {
   it("ne contient aucune donnée variable (date, identifiant)", () => {
@@ -26,6 +32,50 @@ describe("buildLessonContextMessage", () => {
     expect(message.role).toBe("user");
     expect(message.content).toContain("Le vocabulaire de base");
     expect(message.content).toContain("Volume, circulation, zone, point focal, palette.");
+  });
+});
+
+describe("PROJECT_SYSTEM_PROMPT", () => {
+  it("ne contient aucune donnée variable (date, identifiant)", () => {
+    expect(PROJECT_SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+    expect(PROJECT_SYSTEM_PROMPT).not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
+  });
+
+  it("mentionne l'ordre de grandeur pour les budgets", () => {
+    expect(PROJECT_SYSTEM_PROMPT).toMatch(/ordre de grandeur/);
+  });
+
+  it("rappelle que la mémoire du projet vient du journal, jamais devinée", () => {
+    expect(PROJECT_SYSTEM_PROMPT).toMatch(/journal/);
+  });
+});
+
+describe("buildProjectContextMessage", () => {
+  it("porte le nom du projet, les pièces et le journal dans un message utilisateur", () => {
+    const message = buildProjectContextMessage({
+      projectName: "Appartement Bastille",
+      rooms: [{ name: "Séjour", type: "LIVING_ROOM", status: "IN_PROGRESS" }],
+      journalEntries: [
+        { title: "Budget cuisine", kind: "BUDGET", body: "Enveloppe fixée à 8000 €." },
+      ],
+    });
+    expect(message.role).toBe("user");
+    expect(message.content).toContain("Appartement Bastille");
+    expect(message.content).toContain("Séjour");
+    expect(message.content).toContain("Budget cuisine");
+    expect(message.content).toContain("Enveloppe fixée à 8000 €.");
+  });
+
+  it("indique clairement l'absence de pièces ou de journal plutôt que de l'omettre", () => {
+    const message = buildProjectContextMessage({
+      projectName: "Nouveau projet",
+      rooms: [],
+      journalEntries: [],
+    });
+    expect(message.content).toContain("aucune pièce pour l'instant");
+    expect(message.content).toContain("journal vide pour l'instant");
   });
 });
 

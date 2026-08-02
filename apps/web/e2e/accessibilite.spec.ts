@@ -59,6 +59,9 @@ for (const { url, nom } of PAGES_PUBLIQUES) {
 }
 
 test("accessibilité — onboarding et zone applicative", async ({ page }) => {
+  // Une trentaine d'audits axe-core enchaînés (M2 à M10) — le délai par défaut
+  // (30 s) est trop court pour ce parcours complet, pas pour une seule étape.
+  test.setTimeout(150_000);
   await signUp(page);
   await auditer(page, "onboarding");
 
@@ -105,6 +108,11 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.waitForURL(/\/photos\/[a-z0-9]+$/, { timeout: 30_000 });
   await auditer(page, "atelier — analyse photo");
 
+  // "Liste de mobilier" ne vit que sur l'éditeur de pièce (docs/05 M4/M8),
+  // jamais sur la page de détail d'analyse — il faut d'abord repasser par la
+  // passerelle "Ouvrir dans l'atelier" (M6), comme `photos.spec.ts`.
+  await page.getByRole("link", { name: "Ouvrir dans l'atelier" }).click();
+  await page.waitForURL(/\/atelier\/[a-z0-9]+\/[a-z0-9]+$/);
   await page.getByRole("link", { name: "Liste de mobilier" }).click();
   await page.waitForURL(/\/mobilier$/);
   await auditer(page, "atelier — liste de mobilier");
@@ -117,6 +125,22 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.getByRole("button", { name: "Générer" }).click();
   await page.waitForURL(/\/moodboards\/[a-z0-9]+$/, { timeout: 30_000 });
   await auditer(page, "atelier — éditeur de moodboard");
+
+  await page.goto(`${roomUrl}/plan`);
+  await auditer(page, "atelier — import et calibrage du plan");
+
+  await page.goto(`${roomUrl}/photos-projet`);
+  await auditer(page, "atelier — photos de la pièce (projet personnel)");
+
+  await page.goto(projectUrl);
+  await auditer(page, "atelier — page projet (état des pièces, journal, budget)");
+  await page
+    .getByText("Architecte accompagnateur — poser une question sur ce projet")
+    .click();
+  await auditer(
+    page,
+    "atelier — page projet, assistant architecte accompagnateur ouvert",
+  );
 
   await page.goto("/bibliotheque");
   await auditer(page, "bibliothèque — recherche");

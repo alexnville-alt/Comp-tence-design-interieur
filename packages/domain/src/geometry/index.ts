@@ -1,4 +1,5 @@
 export * from "./scene-schema";
+export * from "./calibration";
 export * from "./room";
 export * from "./openings";
 export * from "./collisions";

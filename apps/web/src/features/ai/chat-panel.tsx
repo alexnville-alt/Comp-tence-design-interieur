@@ -22,7 +22,15 @@ interface ChatTurn {
   content: string;
 }
 
-export function ChatPanel({ lessonId }: { lessonId: string }) {
+type ChatAnchor =
+  | { lessonId: string; projectId?: undefined }
+  | { projectId: string; lessonId?: undefined };
+
+export function ChatPanel({
+  summary = "Assistant IA — poser une question sur cette leçon",
+  disclaimer = "L'assistant explique et oriente, mais ne remplace jamais un professionnel du bâtiment. Pour un mur porteur, l'électricité, le gaz, l'amiante ou le plomb, il vous renverra vers un professionnel qualifié plutôt que de répondre.",
+  ...anchor
+}: ChatAnchor & { summary?: string; disclaimer?: string }) {
   const [turns, setTurns] = React.useState<ChatTurn[]>([]);
   const [input, setInput] = React.useState("");
   const [streaming, setStreaming] = React.useState(false);
@@ -42,7 +50,8 @@ export function ChatPanel({ lessonId }: { lessonId: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             conversationId: conversationIdRef.current ?? undefined,
-            lessonId,
+            lessonId: anchor.lessonId,
+            projectId: anchor.projectId,
             message,
           }),
         });
@@ -113,7 +122,7 @@ export function ChatPanel({ lessonId }: { lessonId: string }) {
         setStatus((current) => (current === "Réponse en cours…" ? "" : current));
       }
     },
-    [lessonId],
+    [anchor.lessonId, anchor.projectId],
   );
 
   function handleSubmit(event: React.FormEvent) {
@@ -134,15 +143,11 @@ export function ChatPanel({ lessonId }: { lessonId: string }) {
   return (
     <details className="rounded-[var(--radius-atelier)] border border-[var(--border-strong)] bg-[var(--surface-raised)]">
       <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-[var(--text)]">
-        Assistant IA — poser une question sur cette leçon
+        {summary}
       </summary>
 
       <div className="space-y-4 border-t border-[var(--border)] p-4">
-        <p className="text-xs text-[var(--text-muted)]">
-          L'assistant explique et oriente, mais ne remplace jamais un professionnel du
-          bâtiment. Pour un mur porteur, l'électricité, le gaz, l'amiante ou le plomb, il
-          vous renverra vers un professionnel qualifié plutôt que de répondre.
-        </p>
+        <p className="text-xs text-[var(--text-muted)]">{disclaimer}</p>
 
         <ol aria-label="Conversation avec l'assistant" className="space-y-3">
           {turns.map((turn, i) => (

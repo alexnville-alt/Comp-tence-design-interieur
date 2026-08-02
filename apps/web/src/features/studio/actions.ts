@@ -6,6 +6,7 @@ import { SceneSchema, emptyScene, type Scene } from "@atelier/domain";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getRoomVersionScene } from "./data";
 import { ROOM_TYPES } from "./room-types";
+import { ROOM_STATUSES } from "./room-statuses";
 
 /**
  * Mutations de l'atelier (docs/05 M4).
@@ -63,6 +64,20 @@ async function assertRoomOwnership(userId: string, roomId: string) {
   });
   if (!room) throw new Error("Pièce introuvable.");
   return room;
+}
+
+/** État d'avancement d'une pièce (docs/05 M10, PROJ-05) — en base depuis M4, jamais modifiable avant ce module. */
+export async function updateRoomStatusAction(
+  roomId: string,
+  status: (typeof ROOM_STATUSES)[number],
+): Promise<void> {
+  const user = await requireOnboardedUser();
+  const room = await assertRoomOwnership(user.id, roomId);
+  if (!ROOM_STATUSES.includes(status)) throw new Error("État invalide.");
+
+  await prisma.room.update({ where: { id: room.id }, data: { status } });
+  revalidatePath(`/atelier/${room.projectId}`);
+  revalidatePath(`/atelier/${room.projectId}/${roomId}`);
 }
 
 function parseScene(sceneData: unknown): Scene {

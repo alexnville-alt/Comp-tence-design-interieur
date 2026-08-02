@@ -1,11 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2+M3+M4+M5+M6+M7+M8+M9 : identité, profil, onboarding,
+// Périmètre M1+M2+M3+M4+M5+M6+M7+M8+M9+M10 : identité, profil, onboarding,
 // curriculum, leçons, exercices notés, évaluations de fin de niveau,
 // répétition espacée, atelier 2D, couche IA, analyse photo, bibliothèque,
-// générateurs (palettes, moodboards, listes de mobilier) et progression
-// (XP, séries, badges, temps réel). Le schéma complet est spécifié dans
+// générateurs (palettes, moodboards, listes de mobilier), progression
+// (XP, séries, badges, temps réel) et projet personnel (plans importés
+// calibrés, photos par pièce, journal). Le schéma complet est spécifié dans
 // docs/04-modele-de-donnees.md ; il est livré par module. On ne crée pas
 // trente tables inutilisées : chaque migration accompagne la fonctionnalité
 // qui s'en sert, ce qui garde les migrations relisibles.
@@ -47,6 +48,21 @@
 // brouillon. Aucune table `Palette` séparée : une palette générée est un
 // `Moodboard` dont les items portent `colorHex` sans `libraryItemId` — pas
 // une donnée de nature différente, juste des items sans image.
+//
+// M10 ajoute `ProjectAsset` (plan importé, calibré, ou photo de pièce sans
+// analyse IA — distinct de `PhotoAnalysis`, M6) et `JournalEntry`, plus
+// `AssetKind.FLOOR_PLAN` et `Project.address`/`budgetCents` (docs/04 §3.6).
+// L'import de PDF est explicitement hors périmètre de cette livraison :
+// aucune bibliothèque de rendu PDF fiable et sans dépendance native n'est
+// disponible dans cet environnement (`sharp`/libvips ici compilé sans
+// support PDF, vérifié avant d'écrire une seule ligne) — seuls les formats
+// image (JPEG/PNG/WebP) sont acceptés pour un plan, comme pour une photo
+// depuis M6. Un utilisateur avec un plan en PDF l'exporte en image avant
+// import ; le rendu PDF natif reste un travail de suivi, pas un blocage de
+// cette étape. PROJ-06 (versions et comparaison de propositions) et une
+// bonne part de PROJ-01/04 (créer un projet, saisir des dimensions) sont
+// déjà couverts par l'atelier 2D existant (M4) — pas de nouveau modèle pour
+// eux ici.
 // ─────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -518,13 +534,21 @@ model Project {
   kind        ProjectKind   @default(PERSONAL)
   name        String
   description String?
+  /// Libre, jamais géocodé (docs/04 §3.6) — sert seulement à ancrer le projet
+  /// dans un logement réel pour l'apprenant, aucun usage applicatif.
+  address     String?
   housingType Housing?
+  /// Budget estimé global, en centimes (jamais un flottant) — alimente le
+  /// journal (`JournalEntry.kind = BUDGET`) et l'export PDF (PROJ-08).
+  budgetCents Int?
   status      ProjectStatus @default(DRAFT)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   rooms      Room[]
   moodboards Moodboard[]
+  assets     ProjectAsset[]
+  journal    JournalEntry[]
 
   @@index([userId, kind])
 }
@@ -684,11 +708,6 @@ enum AiFeature {
 
 // ── Fichiers et analyse photo (M6, docs/04 §3.7, ADR-0008) ────────────────
 
-/// `ProjectAsset` (rattachement d'un fichier à un projet avec calibrage
-/// d'échelle pour les plans importés, docs/04 §3.7) reste hors périmètre M6 :
-/// c'est un besoin du plan importé (PROJ-02), pas de la photo analysée —
-/// même principe que les exclusions précédentes (pas de modèle sans code qui
-/// le remplit).
 model Asset {
   id         String    @id @default(cuid())
   userId     String
@@ -705,19 +724,22 @@ model Asset {
   sha256     String
   createdAt  DateTime  @default(now())
 
-  analyses      PhotoAnalysis[]
+  analyses       PhotoAnalysis[]
   moodboardItems MoodboardItem[]
+  projectLinks   ProjectAsset[]
 
   @@index([userId, kind])
   @@index([sha256])
 }
 
-/// Un seul type utilisé pour l'instant. FLOOR_PLAN et INSPIRATION (M10),
-/// PREVIEW (rattrapage du tradeoff M4 sur `RoomVersion.previewAssetId`) et
-/// AVATAR arriveront avec le code qui les traite — même principe que
-/// `ExerciseType.OPEN_CASE` en M5 : pas de valeur d'enum sans utilisateur.
+/// INSPIRATION, PREVIEW (rattrapage du tradeoff M4 sur
+/// `RoomVersion.previewAssetId`) et AVATAR restent absents : pas de valeur
+/// d'enum sans code qui la traite (même principe que `ExerciseType.OPEN_CASE`
+/// en M5). `FLOOR_PLAN` arrive en M10 : plan importé, rattaché par
+/// `ProjectAsset`.
 enum AssetKind {
   ROOM_PHOTO
+  FLOOR_PLAN
 }
 
 model PhotoAnalysis {
@@ -1003,4 +1025,57 @@ model StudySession {
   context String?
 
   @@index([userId, startedAt])
+}
+
+// ── Projet personnel (M10, docs/04 §3.6/3.7) ────────────────────────────────
+
+/// Rattache un fichier (`Asset`) à un projet — plan importé calibré ou photo
+/// de pièce sans analyse IA. Distinct de `PhotoAnalysis` (M6) : une entrée
+/// ici n'implique aucun appel au fournisseur IA, c'est une pièce jointe, pas
+/// une analyse. `roomId` est une référence souple (pas de clé étrangère),
+/// même principe que `PhotoAnalysis.roomId` : la pièce jointe reste
+/// consultable même si la pièce de l'atelier qu'elle documentait a depuis
+/// été supprimée.
+model ProjectAsset {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assetId   String
+  asset     Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  roomId    String?
+  caption   String?
+  /// `{ refPointA: {x,y}, refPointB: {x,y}, refLengthCm, cmPerPixel }` —
+  /// présent seulement pour un plan calibré (`asset.kind = FLOOR_PLAN`),
+  /// calculé par `computeCalibration` (`@atelier/domain`) et jamais recalculé
+  /// côté client après coup (PROJ-02).
+  calibration Json?
+  createdAt   DateTime @default(now())
+
+  @@unique([projectId, assetId])
+  @@index([projectId, roomId])
+}
+
+/// Journal de projet (PROJ-07) : notes, décisions, questions ouvertes, lignes
+/// de budget — en texte libre, jamais structuré au-delà de `kind`. C'est
+/// aussi la mémoire longitudinale que le mode « architecte accompagnateur »
+/// (docs/05 M10) injecte dans le prompt système du chat ancré sur un projet :
+/// une contrainte n'est « dont l'IA se souvient » que si elle a été
+/// journalisée, jamais extraite automatiquement d'une conversation passée.
+model JournalEntry {
+  id        String      @id @default(cuid())
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  kind      JournalKind @default(NOTE)
+  createdAt DateTime    @default(now())
+
+  @@index([projectId, createdAt])
+}
+
+enum JournalKind {
+  NOTE
+  DECISION
+  QUESTION
+  BUDGET
 }
