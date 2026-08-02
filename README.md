@@ -21,22 +21,24 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée                                |
 | **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée                                |
 | **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée                                |
-| **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée — **en attente de validation** |
-| M9 → M12    | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée                                |
+| **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée — **en attente de validation** |
+| M10 → M12   | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
 `feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`,
-`feat(m7)`, `feat(m8)` sur la branche `claude/interior-design-learning-platform-bam6l6`.
+`feat(m7)`, `feat(m8)`, `feat(m9)` sur la branche
+`claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M8** — 466 tests unitaires, 43 tests de bout en bout (dont
+**État à la fin de M9** — 495 tests unitaires, 46 tests de bout en bout (dont
 l'audit d'accessibilité axe-core sur 21 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
 | Vérification                 | Commande            | Résultat                                       |
 | ---------------------------- | ------------------- | ---------------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 466 ✅ (domaine 265 · IA 62 · app 106 · ui 33) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 43 ✅                                          |
+| Tests unitaires              | `pnpm test`         | 495 ✅ (domaine 294 · IA 62 · app 106 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 46 ✅                                          |
 | Types (6 paquets)            | `pnpm typecheck`    | ✅                                             |
 | Lint (6 paquets)             | `pnpm lint`         | ✅                                             |
 | Format                       | `pnpm format:check` | ✅                                             |
@@ -212,9 +214,43 @@ Lire dans cet ordre :
   (« Chaise × 4 », pas quatre lignes), avec lien vers la fiche bibliothèque
   quand `catalogRef` en pointe une réelle
 
-**Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
-au sein de M7/M8) :
+**Progression et gamification (M9)**
 
+- XP crédité une seule fois par gain réel (leçon terminée, exercice réussi la
+  première fois, évaluation de niveau réussie la première fois, révision) —
+  jamais recrédité en repassant un exercice ou une leçon déjà validée ;
+  niveau utilisateur (distinct des 15 niveaux du parcours) dérivé du XP total
+  par une courbe quadratique pure, testée indépendamment de tout contenu réel
+- Série de jours consécutifs avec gel : un jour manqué est absorbé par un gel
+  disponible plutôt que de casser la série, un gel se regagne toutes les
+  sept journées de série active. Ancrée sur des dates calendaires UTC
+  uniquement — jamais l'horloge locale du serveur ou du navigateur — donc
+  invariante au changement de fuseau horaire (test dédié faisant varier
+  `process.env.TZ` sur des scénarios incluant une frontière d'année)
+- 16 badges réels (jalons, régularité, exploration, maîtrise thématique),
+  chacun une règle déclarative (`{type, ...}`) évaluée par une seule fonction
+  pure — ajouter un badge n'ajoute jamais de code, seulement une entrée de
+  contenu synchronisée comme les niveaux et la bibliothèque
+- Temps réel mesuré par heartbeat toutes les 30 s, jamais par la durée depuis
+  l'ouverture de l'onglet : le client n'émet un battement que pendant que la
+  page est visible et au premier plan (Page Visibility API), et chaque
+  battement reçu crédite un montant **fixe** côté serveur — jamais une durée
+  calculée côté navigateur, qui pourrait être falsifiée
+- Tableau de bord étendu : XP/niveau, série et gels disponibles, objectif
+  hebdomadaire (minutes réellement actives cette semaine vs objectif),
+  avancement des 15 niveaux, révisions dues, thèmes les plus fragiles
+  (dérivés des notes de révision), badges débloqués
+- Recommandations personnalisées : réviser le thème le plus fragile, reprendre
+  un projet resté sans nouvelle version de pièce depuis deux semaines
+
+**Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
+au sein de M7/M8/M9) :
+
+- **Corpus de badges partiel** : 16 badges réels contre l'estimation « ~30 »
+  de docs/04 §7 (volumétrie) — le mécanisme (schéma de critères, évaluation,
+  synchronisation) est complet ; la liste s'enrichit au fil des modules
+  suivants, chaque nouvelle fonctionnalité pouvant justifier un nouveau jalon,
+  même logique de corpus honnêtement partiel que la bibliothèque (M7)
 - **Corpus bibliothèque incomplet** : 54 fiches contre ≥ 300 visées par
   docs/05 M7 — le pipeline (schéma, recherche, facettes, relations,
   embeddings) est complet et testé à l'échelle visée (recherche vérifiée
@@ -229,8 +265,8 @@ au sein de M7/M8) :
   aucune fiche à ce stade (docs/04 §3.8, pipeline de curation visuelle hors
   périmètre) — les éléments sans image s'affichent avec leur libellé, dans
   l'éditeur comme à l'export PNG
-- Import de plan (`ProjectAsset`, M10), XP/séries/badges (M9) — les champs
-  `xpReward` existent en base mais ne sont crédités nulle part avant M9
+- Import de plan (`ProjectAsset`, M10) — le champ existe en base, hors
+  périmètre avant M10
 
 ## Démarrage
 

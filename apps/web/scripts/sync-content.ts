@@ -17,6 +17,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { prisma } from "@atelier/db";
 import {
+  BADGES,
   LEVELS,
   checkRelationSymmetry,
   type AnyExerciseFrontmatter,
@@ -188,6 +189,29 @@ async function syncLibrary(contentRoot: string): Promise<number> {
   return items.length;
 }
 
+/** Badges (docs/05 M9) — même mécanisme d'upsert par clé naturelle que le reste de ce script. */
+async function syncBadges(): Promise<number> {
+  for (const badge of BADGES) {
+    await prisma.badge.upsert({
+      where: { slug: badge.slug },
+      update: {
+        title: badge.title,
+        description: badge.description,
+        icon: badge.icon,
+        criteria: badge.criteria,
+      },
+      create: {
+        slug: badge.slug,
+        title: badge.title,
+        description: badge.description,
+        icon: badge.icon,
+        criteria: badge.criteria,
+      },
+    });
+  }
+  return BADGES.length;
+}
+
 async function main() {
   const contentRoot = join(__dirname, "..", "content");
   const registry = scanContent(contentRoot);
@@ -306,11 +330,13 @@ async function main() {
   }
 
   const libraryItemCount = await syncLibrary(contentRoot);
+  const badgeCount = await syncBadges();
 
   console.warn(
     `✓ Contenu synchronisé : ${registry.levels.length} niveaux, ${chapterCount} chapitres, ` +
       `${lessonCount} leçons, ${exerciseCount} exercices, ${cardCount} cartes, ` +
-      `${assessmentCount} évaluations, ${libraryItemCount} fiches bibliothèque.`,
+      `${assessmentCount} évaluations, ${libraryItemCount} fiches bibliothèque, ` +
+      `${badgeCount} badges.`,
   );
 }
 

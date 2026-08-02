@@ -1,8 +1,14 @@
 "use server";
 
 import { prisma } from "@atelier/db";
-import { initCardState, scheduleReview, type ReviewRating } from "@atelier/domain";
+import {
+  initCardState,
+  scheduleReview,
+  XP_AMOUNTS,
+  type ReviewRating,
+} from "@atelier/domain";
 import { requireOnboardedUser } from "@/lib/auth";
+import { awardXp } from "@/features/progression/service";
 
 /**
  * Enregistre une notation de révision (docs/05 M3, ADR-0007).
@@ -66,6 +72,8 @@ export async function reviewCardAction(
       lastRating: rating,
     },
   });
+
+  await awardXp(user.id, XP_AMOUNTS.REVIEW, "REVIEW", cardId);
 
   return { ok: true, nextDueAt: next.dueAt.toISOString() };
 }

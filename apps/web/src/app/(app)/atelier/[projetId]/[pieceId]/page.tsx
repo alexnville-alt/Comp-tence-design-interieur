@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getRoomEditorData } from "@/features/studio/data";
 import { StudioEditor } from "@/features/studio/studio-editor";
+import { HeartbeatTracker } from "@/features/progression/heartbeat-tracker";
 
 export const metadata: Metadata = { title: "Pièce — Atelier" };
 
@@ -42,6 +43,7 @@ export default async function RoomEditorPage({
         </div>
       </div>
 
+      <HeartbeatTracker context="studio" />
       <StudioEditor
         roomId={data.roomId}
         initialScene={data.currentScene}

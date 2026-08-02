@@ -3,6 +3,7 @@
 import { prisma } from "@atelier/db";
 import { ExerciseFrontmatterSchema, gradeExercise } from "@atelier/domain";
 import { requireOnboardedUser } from "@/lib/auth";
+import { awardXp } from "@/features/progression/service";
 
 /**
  * Correction des exercices (docs/05 M3).
@@ -12,6 +13,9 @@ import { requireOnboardedUser } from "@/lib/auth";
  * depuis le client) et persister le résultat. Le score envoyé par le client
  * n'existe même pas dans le type d'entrée — il ne peut donc pas être falsifié
  * en modifiant la requête.
+ *
+ * XP crédité (docs/05 M9) uniquement à la **première** réponse correcte —
+ * revenir corriger un exercice déjà réussi n'en regagne pas.
  */
 
 export interface SubmitExerciseResult {
@@ -46,9 +50,13 @@ export async function submitExerciseAction(
 
   const score = Math.round(exercise.maxScore * grading.scoreRatio);
 
-  const previousAttempts = await prisma.submission.count({
-    where: { userId: user.id, exerciseId },
-  });
+  const [previousAttempts, hadPriorCorrect] = await Promise.all([
+    prisma.submission.count({ where: { userId: user.id, exerciseId } }),
+    prisma.submission.findFirst({
+      where: { userId: user.id, exerciseId, correct: true },
+      select: { id: true },
+    }),
+  ]);
 
   await prisma.submission.create({
     data: {
@@ -61,6 +69,10 @@ export async function submitExerciseAction(
       attempt: previousAttempts + 1,
     },
   });
+
+  if (grading.correct && !hadPriorCorrect) {
+    await awardXp(user.id, exercise.xpReward, "EXERCISE", exerciseId);
+  }
 
   return {
     ok: true,

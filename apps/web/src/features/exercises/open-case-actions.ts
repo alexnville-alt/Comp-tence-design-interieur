@@ -10,6 +10,7 @@ import {
 import { requireOnboardedUser } from "@/lib/auth";
 import { aiProvider } from "@/lib/ai/provider";
 import { checkAiQuota, recordAiUsage } from "@/lib/ai/usage";
+import { awardXp } from "@/features/progression/service";
 
 /**
  * Correction des cas ouverts (OPEN_CASE, docs/05 M5, docs/06 §1.3).
@@ -88,9 +89,13 @@ export async function submitOpenCaseAction(
     };
   }
 
-  const previousAttempts = await prisma.submission.count({
-    where: { userId: user.id, exerciseId },
-  });
+  const [previousAttempts, hadPriorCorrect] = await Promise.all([
+    prisma.submission.count({ where: { userId: user.id, exerciseId } }),
+    prisma.submission.findFirst({
+      where: { userId: user.id, exerciseId, correct: true },
+      select: { id: true },
+    }),
+  ]);
 
   const startedAt = Date.now();
   try {
@@ -137,6 +142,10 @@ export async function submitOpenCaseAction(
         attempt: previousAttempts + 1,
       },
     });
+
+    if (grading.correct && !hadPriorCorrect) {
+      await awardXp(user.id, exercise.xpReward, "EXERCISE", exerciseId);
+    }
 
     return {
       ok: true,

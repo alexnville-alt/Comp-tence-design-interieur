@@ -1,8 +1,9 @@
 "use server";
 
 import { prisma } from "@atelier/db";
-import { computeAssessmentScore, hasPassedAssessment } from "@atelier/domain";
+import { computeAssessmentScore, hasPassedAssessment, XP_AMOUNTS } from "@atelier/domain";
 import { requireOnboardedUser } from "@/lib/auth";
+import { awardXp } from "@/features/progression/service";
 
 /**
  * Finalisation d'une évaluation de fin de niveau (docs/05 M3).
@@ -69,6 +70,12 @@ export async function finalizeAssessmentAction(
       ...(passed ? { completedAt: new Date() } : {}),
     },
   });
+
+  // XP crédité une seule fois — à la première réussite, jamais aux tentatives
+  // suivantes (une évaluation repassée après coup n'en regagne pas).
+  if (passed && !existing?.completedAt) {
+    await awardXp(user.id, XP_AMOUNTS.ASSESSMENT_PASS, "ASSESSMENT", assessment.levelId);
+  }
 
   return { ok: true, score, passingScore: assessment.passingScore, passed };
 }

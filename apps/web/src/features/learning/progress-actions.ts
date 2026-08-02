@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { prisma } from "@atelier/db";
 import { requireOnboardedUser } from "@/lib/auth";
+import { awardXp } from "@/features/progression/service";
 
 /**
  * Progression de lecture (docs/05 M2 — « reprise exacte »).
@@ -95,16 +96,21 @@ export async function completeLessonAction(
 
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
-    select: { blockCount: true },
+    select: { blockCount: true, xpReward: true },
   });
   if (!lesson) return { ok: false };
+
+  const existing = await prisma.lessonProgress.findUnique({
+    where: { userId_lessonId: { userId: user.id, lessonId } },
+    select: { completedAt: true },
+  });
 
   await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId: user.id, lessonId } },
     update: {
       status: "COMPLETED",
       blockIndex: lesson.blockCount,
-      completedAt: new Date(),
+      completedAt: existing?.completedAt ?? new Date(),
     },
     create: {
       userId: user.id,
@@ -114,6 +120,11 @@ export async function completeLessonAction(
       completedAt: new Date(),
     },
   });
+
+  // XP crédité une seule fois — marquer une leçon déjà terminée ne recrédite rien.
+  if (!existing?.completedAt) {
+    await awardXp(user.id, lesson.xpReward, "LESSON", lessonId);
+  }
 
   return { ok: true };
 }

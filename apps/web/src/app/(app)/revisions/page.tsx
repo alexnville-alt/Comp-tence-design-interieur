@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getDailyQueue } from "@/features/review/queue";
 import { ReviewSession } from "@/features/review/review-session";
+import { HeartbeatTracker } from "@/features/progression/heartbeat-tracker";
 
 export const metadata: Metadata = { title: "Révisions" };
 
@@ -19,6 +20,7 @@ export default async function RevisionsPage() {
         </p>
       </header>
 
+      <HeartbeatTracker context="review" />
       <ReviewSession queue={queue} />
     </div>
   );

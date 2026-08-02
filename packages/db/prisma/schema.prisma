@@ -1,13 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2+M3+M4+M5+M6+M7+M8 : identité, profil, onboarding,
+// Périmètre M1+M2+M3+M4+M5+M6+M7+M8+M9 : identité, profil, onboarding,
 // curriculum, leçons, exercices notés, évaluations de fin de niveau,
-// répétition espacée, atelier 2D, couche IA, analyse photo, bibliothèque et
-// générateurs (palettes, moodboards, listes de mobilier). Le schéma complet
-// est spécifié dans docs/04-modele-de-donnees.md ; il est livré par module.
-// On ne crée pas trente tables inutilisées : chaque migration accompagne la
-// fonctionnalité qui s'en sert, ce qui garde les migrations relisibles.
+// répétition espacée, atelier 2D, couche IA, analyse photo, bibliothèque,
+// générateurs (palettes, moodboards, listes de mobilier) et progression
+// (XP, séries, badges, temps réel). Le schéma complet est spécifié dans
+// docs/04-modele-de-donnees.md ; il est livré par module. On ne crée pas
+// trente tables inutilisées : chaque migration accompagne la fonctionnalité
+// qui s'en sert, ce qui garde les migrations relisibles.
 //
 // M3 n'ajoute PAS XpEvent/Badge/UserBadge/StudySession : le crédit XP réel,
 // les séries et les badges sont M9 (gamification). `Lesson.xpReward` et
@@ -16,8 +17,11 @@
 // M5 ajoute OPEN_CASE à `ExerciseType` (corrigé par l'IA sur le barème de
 // docs/06 §1.3) : 8 des 10 types de docs/04 sont maintenant implémentés.
 // LAYOUT (dépend du canevas de l'atelier, M4, mais pas encore intégré comme
-// type d'exercice de leçon) et CHALLENGE (défi hebdomadaire, M9) restent
-// exclus — même principe : pas d'enum sans code capable de le traiter.
+// type d'exercice de leçon) et CHALLENGE restent exclus — même principe :
+// pas d'enum sans code capable de le traiter. Correction par rapport à une
+// note laissée ici en M5 : CHALLENGE (défi hebdomadaire) n'est pas de la
+// gamification (M9, cette section) mais du contenu — « Défis hebdomadaires »
+// figure sous M11 (docs/05 §M11, exécuté en parallèle dès M3), pas M9.
 //
 // M4 s'écarte de docs/04 §3.6 sur deux points, documentés dans le rapport de
 // livraison : pas de `Room.currentVersionId` (la version courante est la
@@ -100,6 +104,9 @@ model User {
   aiUsage             AiUsage[]
   assets              Asset[]
   favorites           Favorite[]
+  xpEvents            XpEvent[]
+  badges              UserBadge[]
+  studySessions       StudySession[]
 
   @@index([deletedAt])
 }
@@ -914,4 +921,86 @@ model MoodboardItem {
   createdAt DateTime @default(now())
 
   @@index([moodboardId])
+}
+
+// ── Progression et gamification (M9, docs/04 §3.1/3.4) ──────────────────────
+
+/// Historique append-only des gains de XP — jamais modifié ni supprimé après
+/// écriture, source de vérité derrière `Profile.totalXp` (compteur
+/// dénormalisé, recalculable depuis cette table).
+model XpEvent {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount Int
+  reason XpReason
+  /// Leçon, exercice ou évaluation à l'origine du gain — facultatif (ex. STREAK
+  /// n'a pas de ressource à référencer).
+  refId     String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Réduit par rapport à `docs/04` §3.4 (`LESSON QUIZ EXERCISE REVIEW
+/// ASSESSMENT PROJECT STREAK CHALLENGE`) : `QUIZ` est fusionné dans
+/// `EXERCISE` (aucun code ne distingue un exercice de type quiz d'un autre —
+/// tous passent par `submitExerciseAction`, une seule raison suffit) ;
+/// `PROJECT` (M10) et `CHALLENGE` (défis hebdomadaires, M11) restent exclus —
+/// même principe que `ExerciseType` plus haut : pas d'enum sans code capable
+/// de le traiter.
+enum XpReason {
+  LESSON
+  EXERCISE
+  REVIEW
+  ASSESSMENT
+  STREAK
+}
+
+/// Règle déclarative, évaluée par `packages/domain` (`evaluateBadge`) contre
+/// un contexte agrégé côté serveur (série courante, niveaux terminés,
+/// compteurs nommés) — jamais par une requête ad hoc par badge, pour que
+/// débloquer un nouveau badge se limite à ajouter une entrée ici.
+model Badge {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  description String
+  /// Nom d'icône `lucide-react` (`apps/web`) — pas d'image dédiée, même
+  /// raisonnement que `LibraryItem.imageAssetId` (M7) : aucun pipeline de
+  /// curation visuelle en périmètre.
+  icon String
+  /// `{ type: "streak", days } | { type: "level_complete", level } |
+  /// { type: "count", metric, gte }` — voir `BadgeCriteriaSchema`
+  /// (`@atelier/domain`).
+  criteria Json
+  users    UserBadge[]
+}
+
+model UserBadge {
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId  String
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  earnedAt DateTime @default(now())
+
+  @@id([userId, badgeId])
+}
+
+/// Temps réel passé, alimenté par heartbeat toutes les 30 s (PROG-05) — pas
+/// la durée depuis l'ouverture de l'onglet : le client n'envoie un battement
+/// que pendant que la page est visible et au premier plan (`document.visibilityState`),
+/// donc un onglet oublié en arrière-plan n'accumule rien.
+model StudySession {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt DateTime
+  endedAt   DateTime?
+  activeMs  Int       @default(0)
+  /// "lesson:<id>" | "studio" | "review" — contexte libre, jamais interrogé
+  /// par égalité stricte, seulement affiché.
+  context String?
+
+  @@index([userId, startedAt])
 }

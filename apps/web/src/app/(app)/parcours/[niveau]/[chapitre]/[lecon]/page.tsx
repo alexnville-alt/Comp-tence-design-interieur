@@ -7,6 +7,7 @@ import { getContentRegistry } from "@/lib/content/get-registry";
 import { LessonProgressTracker } from "@/features/learning/lesson-progress-tracker";
 import { ExerciseBlock } from "@/features/exercises/exercise-block";
 import { ChatPanel } from "@/features/ai/chat-panel";
+import { HeartbeatTracker } from "@/features/progression/heartbeat-tracker";
 
 async function loadLesson(niveau: string, chapitre: string, lecon: string) {
   const lesson = await prisma.lesson.findUnique({
@@ -72,6 +73,7 @@ export default async function LeconPage({
         </p>
       </header>
 
+      <HeartbeatTracker context={`lesson:${lesson.id}`} />
       <LessonProgressTracker
         lessonId={lesson.id}
         blockCount={lesson.blockCount}
