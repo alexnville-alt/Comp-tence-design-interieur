@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
+import { SkipLink } from "@/components/skip-link";
 import { readReducedMotion, readThemePreference, themeAttribute } from "@/lib/theme";
 
 export const metadata: Metadata = {
@@ -10,7 +11,12 @@ export const metadata: Metadata = {
   description:
     "Du débutant complet au niveau professionnel : concevez et rénovez vous-même " +
     "chaque pièce de votre habitation.",
-  robots: { index: false, follow: false }, // ouvert au public en M12 seulement
+  // Ouvert au public en M12 (docs/05) : jusqu'ici, rien ne justifiait
+  // l'indexation d'une application encore en construction. Les pages
+  // légales (M12) marquent explicitement les informations d'identité de
+  // l'éditeur restant à compléter avant un lancement réel — voir
+  // /cgu et /politique-de-confidentialite.
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -40,9 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <body className="antialiased">
-        <a href="#contenu" className="skip-link">
-          Aller au contenu principal
-        </a>
+        <SkipLink />
         {children}
       </body>
     </html>

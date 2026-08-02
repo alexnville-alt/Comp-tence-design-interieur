@@ -143,7 +143,8 @@ export function AppShell({
       </nav>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <main id="contenu" className="flex-1 pb-20 md:pb-0">
+        {/* `tabIndex={-1}` : cible du lien d'évitement (voir app/page.tsx). */}
+        <main id="contenu" tabIndex={-1} className="flex-1 pb-20 md:pb-0">
           {children}
         </main>
       </div>

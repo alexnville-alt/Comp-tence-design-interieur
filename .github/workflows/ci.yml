@@ -127,6 +127,15 @@ jobs:
       - name: Tests E2E et audit d'accessibilité
         run: pnpm e2e
 
+      - name: Serveur de production (budgets de performance)
+        working-directory: apps/web
+        run: |
+          npx dotenv -e ../../.env -- next start --port 3100 --hostname 127.0.0.1 &
+          timeout 60 bash -c 'until curl -sf http://127.0.0.1:3100/api/health; do sleep 2; done'
+
+      - name: Budgets de performance (Lighthouse — LCP/TBT, docs/01 §4)
+        run: pnpm --filter @atelier/web perf:budgets
+
       - name: Rapport en cas d'échec
         if: failure()
         uses: actions/upload-artifact@v4

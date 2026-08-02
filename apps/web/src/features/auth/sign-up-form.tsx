@@ -59,7 +59,15 @@ export function SignUpForm() {
       <p className="text-xs text-[var(--text-muted)]">
         En créant un compte, vous acceptez que vos données de progression soient
         conservées pour vous permettre de reprendre votre parcours. Vous pouvez les
-        exporter ou les supprimer à tout moment depuis votre profil.
+        exporter ou les supprimer à tout moment depuis votre profil. Voir les{" "}
+        <a href="/cgu" className="underline underline-offset-2">
+          conditions générales d'utilisation
+        </a>{" "}
+        et la{" "}
+        <a href="/politique-de-confidentialite" className="underline underline-offset-2">
+          politique de confidentialité
+        </a>
+        .
       </p>
     </form>
   );

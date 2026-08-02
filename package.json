@@ -22,6 +22,8 @@
     "db:push": "pnpm --filter @atelier/db push",
     "db:seed": "pnpm --filter @atelier/db seed && pnpm --filter @atelier/web content:sync",
     "db:studio": "pnpm --filter @atelier/db studio",
+    "db:backup": "pnpm --filter @atelier/db backup",
+    "db:restore": "pnpm --filter @atelier/db restore",
     "docker:up": "docker compose -f docker/compose.yml up -d",
     "docker:down": "docker compose -f docker/compose.yml down",
     "content:sync": "pnpm --filter @atelier/web content:sync"

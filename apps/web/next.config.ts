@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const config: NextConfig = {
   // `standalone` n'a de sens que pour l'image Docker : il n'embarque que les
@@ -34,4 +35,13 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+// `withSentryConfig` reste sans effet observable sans les variables
+// SENTRY_ORG/SENTRY_PROJECT/SENTRY_AUTH_TOKEN (absentes de ce dépôt) : le
+// plugin de compilation avertit puis saute l'étape d'upload des source maps
+// plutôt que d'échouer le build — vérifié par un `next build` réel sans ces
+// variables (M12).
+export default withSentryConfig(config, {
+  silent: true,
+  telemetry: false,
+  webpack: { treeshake: { removeDebugLogging: true } },
+});

@@ -29,9 +29,23 @@ Sur tout budget, utilise l'expression « ordre de grandeur » plutôt qu'un chif
 
 export interface AnalyzePhotoResult {
   ok: boolean;
-  error?: "not_found" | "quota" | "provider_unavailable";
+  error?: "not_found" | "consent_required" | "quota" | "provider_unavailable";
   message?: string;
   analysisId?: string;
+}
+
+/**
+ * Consentement au premier envoi d'une photo au fournisseur IA (M12, docs/01
+ * §9) — vérifié en tout premier, avant même le cache SHA-256 : une analyse
+ * servie depuis le cache est tout de même une analyse IA de *cette* photo
+ * du point de vue de l'apprenant, donc soumise au même consentement.
+ */
+export async function recordPhotoAiConsentAction(): Promise<void> {
+  const user = await requireOnboardedUser();
+  await prisma.profile.update({
+    where: { userId: user.id },
+    data: { photoAiConsentAt: new Date() },
+  });
 }
 
 export async function analyzePhotoAction(
@@ -39,6 +53,14 @@ export async function analyzePhotoAction(
   roomId?: string,
 ): Promise<AnalyzePhotoResult> {
   const user = await requireOnboardedUser();
+
+  const profile = await prisma.profile.findUniqueOrThrow({
+    where: { userId: user.id },
+    select: { photoAiConsentAt: true },
+  });
+  if (!profile.photoAiConsentAt) {
+    return { ok: false, error: "consent_required" };
+  }
 
   const asset = await prisma.asset.findUnique({ where: { id: assetId } });
   if (!asset || asset.userId !== user.id) {

@@ -15,7 +15,8 @@ export default async function BienvenuePage() {
   const firstName = user.name?.split(" ")[0] ?? null;
 
   return (
-    <main id="contenu" className="mx-auto max-w-2xl px-6 py-12">
+    // `tabIndex={-1}` : cible du lien d'évitement (voir app/page.tsx).
+    <main id="contenu" tabIndex={-1} className="mx-auto max-w-2xl px-6 py-12">
       <OnboardingWizard firstName={firstName} />
     </main>
   );

@@ -226,6 +226,12 @@ model Profile {
 
   aiMonthlyQuota Int @default(200)
 
+  // Consentement au premier envoi d'une photo au fournisseur IA (M12,
+  // docs/01 §9). `null` : jamais demandé — la première demande d'analyse
+  // doit l'obtenir avant tout appel IA. Horodaté, jamais un simple booléen :
+  // une date fait foi en cas de litige, un booléen non.
+  photoAiConsentAt DateTime?
+
   onboardedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

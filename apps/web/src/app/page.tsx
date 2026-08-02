@@ -27,7 +27,11 @@ export default async function AccueilPage() {
         </nav>
       </header>
 
-      <main id="contenu" className="mx-auto max-w-6xl px-6">
+      {/* `tabIndex={-1}` : cible du lien d'évitement — focusable
+      programmatiquement à l'activation du lien, jamais par tabulation
+      séquentielle. Sans lui, activer « Aller au contenu principal » déplace
+      le défilement mais pas le focus clavier réel (M12). */}
+      <main id="contenu" tabIndex={-1} className="mx-auto max-w-6xl px-6">
         <section className="py-16 md:py-24">
           <p className="mb-4 text-sm font-medium uppercase tracking-wide text-[var(--accent)]">
             Design d'intérieur · {LEVELS.length} niveaux · ≈ {heures} h
@@ -74,9 +78,26 @@ export default async function AccueilPage() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-6xl px-6 py-10 text-xs text-[var(--text-muted)]">
-        Outil pédagogique. Ne remplace pas un maître d'œuvre ni un bureau d'études : toute
-        intervention structurelle, électrique ou gaz relève d'un professionnel qualifié.
+      <footer className="mx-auto max-w-6xl space-y-3 px-6 py-10 text-xs text-[var(--text-muted)]">
+        <p>
+          Outil pédagogique. Ne remplace pas un maître d'œuvre ni un bureau d'études :
+          toute intervention structurelle, électrique ou gaz relève d'un professionnel
+          qualifié.
+        </p>
+        <nav aria-label="Documents légaux" className="flex gap-4">
+          <Link
+            href="/politique-de-confidentialite"
+            className="underline underline-offset-2"
+          >
+            Confidentialité
+          </Link>
+          <Link href="/cgu" className="underline underline-offset-2">
+            CGU
+          </Link>
+          <Link href="/accessibilite" className="underline underline-offset-2">
+            Accessibilité
+          </Link>
+        </nav>
       </footer>
     </div>
   );

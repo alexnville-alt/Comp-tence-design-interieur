@@ -67,6 +67,13 @@ const schema = z
     S3_BUCKET: z.string().min(1, "S3_BUCKET est requis."),
     S3_ACCESS_KEY_ID: z.string().min(1, "S3_ACCESS_KEY_ID est requis."),
     S3_SECRET_ACCESS_KEY: z.string().min(1, "S3_SECRET_ACCESS_KEY est requis."),
+
+    // Supervision (M12) : facultative, comme ANTHROPIC_API_KEY — son absence
+    // désactive silencieusement la fonctionnalité plutôt que de bloquer le
+    // démarrage. Aucun compte Sentry ni collecteur OpenTelemetry réel n'est
+    // fourni avec ce dépôt ; voir docs d'exploitation pour le brancher.
+    SENTRY_DSN: z.string().url().optional(),
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
   })
   // Une paire OAuth incomplète est presque toujours une erreur de configuration
   // silencieuse : le bouton Google apparaît puis échoue au clic.

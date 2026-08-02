@@ -63,6 +63,10 @@ test("téléverser une photo l'analyse, affiche repères et améliorations, et r
 
   await test.step("téléversement et analyse : repères, améliorations, passerelle atelier", async () => {
     await page.getByLabel("Analyser une photo de cette pièce").setInputFiles(FIXTURE);
+
+    // Premier envoi d'une photo à l'assistant IA pour ce compte (M12,
+    // docs/01 §9) : le consentement explicite est demandé avant tout appel.
+    await page.getByRole("button", { name: "J'accepte et je continue" }).click();
     await page.waitForURL(/\/photos\/[a-z0-9]+$/, { timeout: 30_000 });
 
     await expect(page.getByText("Style détecté")).toBeVisible();

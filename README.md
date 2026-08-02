@@ -24,27 +24,32 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée                                |
 | **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée                                |
 | **M10**     | Projet personnel (plan calibré, journal, architecte accompagnateur, PDF) | ✅ Livrée                                |
-| **M11**     | Contenu des 15 niveaux (leçons, intérieurs célèbres, jalons, défis)      | ✅ Livrée — **en attente de validation** |
-| M12         | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M11**     | Contenu des 15 niveaux (leçons, intérieurs célèbres, jalons, défis)      | ✅ Livrée                                |
+| **M12**     | Finitions et mise en production (dernier module de la feuille de route)  | ✅ Livrée — **en attente de validation** |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
-explicite avant que le suivant ne démarre. Historique des livraisons : commits
-`feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`,
-`feat(m7)`, `feat(m8)`, `feat(m9)`, `feat(m10)`, `feat(m11)` sur la branche
+explicite avant que le suivant ne démarre. M12 est le dernier module de
+[docs/05](docs/05-feuille-de-route.md) : sa validation clôt le découpage
+M0→M12. Historique des livraisons : commits `feat(m0,m1)`, `feat(m2)`,
+`feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`, `feat(m7)`, `feat(m8)`,
+`feat(m9)`, `feat(m10)`, `feat(m11)`, `feat(m12)` sur la branche
 `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M11** — 556 tests unitaires, 50 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 28 écrans/flux, en thème clair et sombre),
-lint, types et format vérifiés en intégration continue.
+**État à la fin de M12** — 556 tests unitaires, 60 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 31 écrans/flux, en thème clair et sombre,
+et une suite dédiée aux en-têtes de sécurité), lint, types et format vérifiés
+en intégration continue.
 
-| Vérification                 | Commande            | Résultat                                       |
-| ---------------------------- | ------------------- | ---------------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 556 ✅ (domaine 332 · IA 62 · app 129 · ui 33) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 50 ✅                                          |
-| Types (6 paquets)            | `pnpm typecheck`    | ✅                                             |
-| Lint (6 paquets)             | `pnpm lint`         | ✅                                             |
-| Format                       | `pnpm format:check` | ✅                                             |
-| Build de production          | `pnpm build`        | ✅ 38 routes                                   |
+| Vérification                 | Commande                                | Résultat                                       |
+| ---------------------------- | --------------------------------------- | ---------------------------------------------- |
+| Tests unitaires              | `pnpm test`                             | 556 ✅ (domaine 332 · IA 62 · app 129 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`                              | 60 ✅                                          |
+| Budgets de performance       | `pnpm perf:budgets`                     | ✅ tableau de bord et lecteur de leçon         |
+| Types (6 paquets)            | `pnpm typecheck`                        | ✅                                             |
+| Lint (6 paquets)             | `pnpm lint`                             | ✅                                             |
+| Format                       | `pnpm format:check`                     | ✅                                             |
+| Build de production          | `pnpm build`                            | ✅ 41 routes                                   |
+| Restauration de sauvegarde   | `pnpm db:backup` puis `pnpm db:restore` | ✅ testée en conditions réelles (M12)          |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
 lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
@@ -70,7 +75,8 @@ Lire dans cet ordre :
 | 4   | [Modèle de données](docs/04-modele-de-donnees.md)           | Schéma Prisma commenté, diagramme ERD, stratégie relationnel/JSONB.                           |
 | 5   | [Feuille de route](docs/05-feuille-de-route.md)             | Découpage M0→M12, critères d'acceptation, estimation, dépendances.                            |
 | 6   | [Curriculum pédagogique](docs/06-curriculum-pedagogique.md) | Contenu détaillé des 15 niveaux, méthodes d'apprentissage, format des leçons.                 |
-| 7   | [Décisions d'architecture (ADR)](docs/adr/)                 | Le _pourquoi_ de chaque choix technique structurant.                                          |
+| 7   | [Documentation d'exploitation](docs/07-exploitation.md)     | Déploiement, sauvegardes/restauration, supervision, rollback, réponse à incident.             |
+| 8   | [Décisions d'architecture (ADR)](docs/adr/)                 | Le _pourquoi_ de chaque choix technique structurant.                                          |
 
 ---
 
@@ -303,8 +309,48 @@ Lire dans cet ordre :
   « Projets » restée bloquée depuis M10 (`comingIn: "M10"` jamais résolu,
   aucune route `/projets` n'ayant jamais existé)
 
+**Finitions et mise en production (M12)**
+
+- CSP stricte avec nonce par requête et `strict-dynamic` (`src/middleware.ts`)
+  plus HSTS, en complément des en-têtes statiques déjà posés — vérifiée sans
+  violation silencieuse sur le parcours principal (nouveau test dédié) ;
+  `style-src-attr 'unsafe-inline'` reste nécessaire pour les éditeurs (atelier
+  2D, moodboard) qui positionnent des éléments par attribut `style` en ligne,
+  seul cas que CSP niveau 3 n'autorise par aucun mécanisme de nonce ou de hash
+- Audit accessibilité approfondi au-delà de l'axe-core déjà en place : un
+  vrai défaut trouvé et corrigé — le lien d'évitement changeait l'URL mais ne
+  déplaçait jamais le focus clavier réel (`tabIndex={-1}` seul s'est révélé
+  insuffisant en pratique ; corrigé par un composant `SkipLink` qui déplace le
+  focus explicitement) — plus un premier passage d'audit à résolution mobile
+- Budgets de performance réels (`pnpm perf:budgets`) : Lighthouse en
+  émulation mobile, session authentifiée créée via un vrai compte, médiane de
+  3 mesures sur les pages bloquantes (tableau de bord, lecteur de leçon) pour
+  absorber le bruit de mesure — applique les seuils LCP < 2,5 s / TBT < 200 ms
+  (proxy de laboratoire pour l'INP) de docs/01 §4, wiré en CI
+- Supervision Sentry + OpenTelemetry (`@sentry/nextjs`, `@vercel/otel`),
+  strictement no-op sans `SENTRY_DSN`/`OTEL_EXPORTER_OTLP_ENDPOINT` — un
+  import statique du SDK client avait gonflé le JS partagé de +84 ko
+  (suffisant pour faire échouer les budgets qui venaient d'être posés),
+  corrigé par un import dynamique jamais résolu sans DSN
+- Sauvegardes et restauration réelles (`packages/db/scripts/backup.sh`/
+  `restore.sh`, `pg_dump`/`pg_restore`) — testées en conditions réelles lors
+  de cette livraison : sauvegarde de la base réelle, destruction complète du
+  schéma, restauration, vérification exacte des comptages et d'un
+  enregistrement précis
+- Trois pages légales publiques réelles (politique de confidentialité, CGU,
+  déclaration d'accessibilité), grounded dans le comportement effectif de
+  l'app, avec les informations d'identité de l'éditeur explicitement
+  marquées comme restant à compléter avant un lancement réel
+- Consentement explicite au premier envoi d'une photo au fournisseur IA
+  (`Profile.photoAiConsentAt`), vérifié côté serveur avant tout appel — y
+  compris avant le cache SHA-256, puisqu'une analyse servie depuis le cache
+  reste une analyse IA de cette photo du point de vue de l'apprenant
+- Documentation d'exploitation réelle (`docs/07-exploitation.md`) :
+  déploiement, sauvegardes/restauration, supervision, rollback, seuils
+  d'alerte, rotation de secrets
+
 **Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
-au sein de M7/M8/M9/M10/M11) :
+au sein de M7/M8/M9/M10/M11/M12) :
 
 - **Corpus de badges partiel** : 16 badges réels contre l'estimation « ~30 »
   de docs/04 §7 (volumétrie) — le mécanisme (schéma de critères, évaluation,
@@ -339,6 +385,28 @@ au sein de M7/M8/M9/M10/M11) :
   et testé — seule la rédaction du corpus restant est différée, même logique
   que la bibliothèque (M7) et les badges (M9). Les 12 intérieurs célèbres
   sont en revanche complets (12/12, docs/06 §4.2)
+- **Audit accessibilité manuel avec lecteur d'écran** : docs/05 M12 vise un
+  audit clavier **et** lecteur d'écran ; ce qui a été livré est un audit
+  clavier réel (parcours automatisés existants + un nouveau test dédié qui a
+  trouvé et corrigé un vrai défaut sur le lien d'évitement) et l'axe-core
+  habituel, mais aucun test avec un lecteur d'écran réel (NVDA, JAWS,
+  VoiceOver) ni avec des utilisateurs en situation de handicap n'a été mené
+  — honnêtement déclaré dans `/accessibilite`, pas seulement ici
+- **Identité juridique de l'éditeur** : les trois pages légales (M12) sont
+  réelles et grounded dans le comportement effectif de l'app, mais marquent
+  explicitement `[À COMPLÉTER]` là où seule une vraie raison sociale (nom,
+  adresse, SIRET, juridiction) peut aller — ce dépôt de démonstration n'a
+  pas d'identité juridique propre
+- **Supervision sans compte réel** : Sentry et OpenTelemetry sont câblés et
+  vérifiés no-op sans configuration (aucun appel réseau, aucun poids de
+  bundle ajouté), mais aucun compte Sentry ni collecteur OTLP réel n'est
+  fourni avec ce dépôt — à brancher via les variables documentées dans
+  `docs/07-exploitation.md` §5
+- **Planification des sauvegardes** : les scripts (`pnpm db:backup`/
+  `db:restore`) sont réels, testés en conditions réelles (sauvegarde →
+  destruction complète du schéma → restauration → vérification exacte), mais
+  leur exécution automatique quotidienne (cron ou équivalent) dépend d'une
+  infrastructure de production pas encore choisie pour ce dépôt
 
 ## Démarrage
 

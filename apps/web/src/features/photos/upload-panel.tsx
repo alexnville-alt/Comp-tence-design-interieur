@@ -3,16 +3,18 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { requestPhotoUploadAction, confirmPhotoUploadAction } from "./upload-actions";
-import { analyzePhotoAction } from "./analysis-actions";
+import { analyzePhotoAction, recordPhotoAiConsentAction } from "./analysis-actions";
 
-type Step = "idle" | "uploading" | "processing" | "analyzing" | "error";
+type Step = "idle" | "uploading" | "processing" | "analyzing" | "consent" | "error";
 
 const STEP_MESSAGES: Record<Step, string> = {
   idle: "",
   uploading: "Téléversement en cours…",
   processing: "Vérification et préparation de l'image…",
   analyzing: "Analyse en cours — cela peut prendre quelques instants…",
+  consent: "",
   error: "",
 };
 
@@ -32,6 +34,25 @@ export function PhotoUploadPanel({
   const router = useRouter();
   const [step, setStep] = React.useState<Step>("idle");
   const [error, setError] = React.useState<string | null>(null);
+  const [pendingAssetId, setPendingAssetId] = React.useState<string | null>(null);
+
+  async function runAnalysis(assetId: string) {
+    setStep("analyzing");
+    const analysis = await analyzePhotoAction(assetId, roomId);
+
+    if (analysis.error === "consent_required") {
+      setPendingAssetId(assetId);
+      setStep("consent");
+      return;
+    }
+    if (!analysis.ok || !analysis.analysisId) {
+      setError(analysis.message ?? "L'analyse a échoué. Réessayez.");
+      setStep("error");
+      return;
+    }
+
+    router.push(`/atelier/${projectId}/${roomId}/photos/${analysis.analysisId}`);
+  }
 
   async function handleFile(file: File) {
     setError(null);
@@ -74,22 +95,44 @@ export function PhotoUploadPanel({
         return;
       }
 
-      setStep("analyzing");
-      const analysis = await analyzePhotoAction(confirmed.assetId, roomId);
-      if (!analysis.ok || !analysis.analysisId) {
-        setError(analysis.message ?? "L'analyse a échoué. Réessayez.");
-        setStep("error");
-        return;
-      }
-
-      router.push(`/atelier/${projectId}/${roomId}/photos/${analysis.analysisId}`);
+      await runAnalysis(confirmed.assetId);
     } catch {
       setError("Une erreur est survenue. Réessayez.");
       setStep("error");
     }
   }
 
-  const pending = step === "uploading" || step === "processing" || step === "analyzing";
+  async function handleConsent() {
+    if (!pendingAssetId) return;
+    await recordPhotoAiConsentAction();
+    await runAnalysis(pendingAssetId);
+  }
+
+  const pending =
+    step === "uploading" ||
+    step === "processing" ||
+    step === "analyzing" ||
+    step === "consent";
+
+  if (step === "consent") {
+    return (
+      <div className="space-y-3 rounded-[var(--radius-atelier)] border border-[var(--border)] bg-[var(--surface-raised)] p-5">
+        <p className="text-sm text-[var(--text)]">
+          Cette photo va être envoyée à l'assistant IA pour être analysée. C'est la
+          première fois que vous demandez une analyse : votre accord est nécessaire avant
+          l'envoi. Voir la{" "}
+          <a
+            href="/politique-de-confidentialite"
+            className="underline underline-offset-2"
+          >
+            politique de confidentialité
+          </a>
+          .
+        </p>
+        <Button onClick={() => void handleConsent()}>J'accepte et je continue</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 rounded-[var(--radius-atelier)] border border-[var(--border)] bg-[var(--surface-raised)] p-5">

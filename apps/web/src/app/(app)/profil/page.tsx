@@ -71,6 +71,16 @@ export default async function ProfilPage() {
               Exporter mes données (JSON)
             </a>
           </Button>
+          <p className="mt-3 text-xs text-[var(--text-muted)]">
+            Voir la{" "}
+            <a
+              href="/politique-de-confidentialite"
+              className="underline underline-offset-2"
+            >
+              politique de confidentialité
+            </a>
+            .
+          </p>
         </CardContent>
       </Card>
 

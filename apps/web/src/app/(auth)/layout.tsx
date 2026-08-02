@@ -18,7 +18,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </Link>
       </header>
 
-      <main id="contenu" className="flex flex-1 items-start justify-center px-4 pb-16">
+      {/* `tabIndex={-1}` : cible du lien d'évitement (voir app/page.tsx). */}
+      <main
+        id="contenu"
+        tabIndex={-1}
+        className="flex flex-1 items-start justify-center px-4 pb-16"
+      >
         <div className="w-full max-w-md">{children}</div>
       </main>
     </div>

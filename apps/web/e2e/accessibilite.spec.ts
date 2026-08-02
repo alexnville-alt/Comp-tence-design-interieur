@@ -40,6 +40,9 @@ const PAGES_PUBLIQUES = [
   { url: "/inscription", nom: "inscription" },
   { url: "/connexion", nom: "connexion" },
   { url: "/mot-de-passe-oublie", nom: "mot de passe oublié" },
+  { url: "/politique-de-confidentialite", nom: "politique de confidentialité" },
+  { url: "/cgu", nom: "conditions générales d'utilisation" },
+  { url: "/accessibilite", nom: "déclaration d'accessibilité" },
 ];
 
 for (const { url, nom } of PAGES_PUBLIQUES) {
@@ -57,6 +60,22 @@ for (const { url, nom } of PAGES_PUBLIQUES) {
     await auditer(page, `${nom} (sombre)`);
   });
 }
+
+test("le lien d'évitement déplace réellement le focus clavier, pas seulement le défilement", async ({
+  page,
+}) => {
+  // Un piège classique (M12) : un lien d'évitement qui pointe vers une ancre
+  // sans `tabIndex={-1}` fait défiler la page jusqu'à la cible sans jamais y
+  // déplacer le focus clavier réel — invisible à axe-core, qui ne teste pas
+  // la navigation clavier, seul un parcours manuel (ou simulé ici) le révèle.
+  await page.goto("/");
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("link", { name: "Aller au contenu principal" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#contenu")).toBeFocused();
+});
 
 test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   // Une trentaine d'audits axe-core enchaînés (M2 à M10) — le délai par défaut
@@ -105,6 +124,14 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.waitForURL(/\/photos$/);
   await auditer(page, "atelier — téléversement de photo");
   await page.getByLabel("Analyser une photo de cette pièce").setInputFiles(PHOTO_FIXTURE);
+
+  // Premier envoi d'une photo à l'assistant IA pour ce compte (M12,
+  // docs/01 §9) : le consentement explicite est demandé avant tout appel.
+  await expect(
+    page.getByRole("button", { name: "J'accepte et je continue" }),
+  ).toBeVisible();
+  await auditer(page, "atelier — consentement premier envoi de photo à l'IA");
+  await page.getByRole("button", { name: "J'accepte et je continue" }).click();
   await page.waitForURL(/\/photos\/[a-z0-9]+$/, { timeout: 30_000 });
   await auditer(page, "atelier — analyse photo");
 
@@ -172,4 +199,27 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
 
   await page.goto("/profil");
   await auditer(page, "profil");
+});
+
+test("accessibilité — viewport mobile (barre de navigation inférieure)", async ({
+  page,
+}) => {
+  // Toute la suite ci-dessus s'exécute en résolution bureau (projet
+  // `chromium` = Desktop Chrome) : la barre latérale est donc seule exposée
+  // à l'arbre d'accessibilité (`hidden md:flex`), la barre inférieure mobile
+  // (`md:hidden`) n'a jamais été auditée. Un `<nav>` distinct existe pour
+  // chaque taille — les deux partagent le même `aria-label`, sans conflit
+  // réel puisque `display: none` retire celui qui n'est pas affiché de
+  // l'arbre d'accessibilité, mais seul un audit à cette largeur le vérifie.
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  await signUp(page);
+  await auditer(page, "mobile — onboarding");
+  await completeOnboarding(page);
+  await auditer(page, "mobile — tableau de bord");
+
+  const bottomNav = page.getByRole("navigation", { name: "Navigation principale" });
+  await expect(bottomNav).toBeVisible();
+  await expect(bottomNav.getByRole("link", { name: "Parcours" })).toBeVisible();
 });
