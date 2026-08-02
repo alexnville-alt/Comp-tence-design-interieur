@@ -4,13 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
-  Home,
+  Flag,
+  Landmark,
   LayoutDashboard,
   Library,
   PencilRuler,
   RotateCcw,
   ShieldCheck,
   Settings,
+  Trophy,
+  type Home,
 } from "lucide-react";
 import { cn } from "@atelier/ui";
 
@@ -64,7 +67,21 @@ const NAV: NavItem[] = [
     comingIn: null,
     mobile: true,
   },
-  { href: "/projets", label: "Projets", icon: Home, comingIn: "M10", mobile: false },
+  {
+    href: "/interieurs-celebres",
+    label: "Intérieurs célèbres",
+    icon: Landmark,
+    comingIn: null,
+    mobile: false,
+  },
+  {
+    href: "/projets-jalons",
+    label: "Projets jalons",
+    icon: Flag,
+    comingIn: null,
+    mobile: false,
+  },
+  { href: "/defis", label: "Défis", icon: Trophy, comingIn: null, mobile: false },
 ];
 
 const ADMIN_ITEM: NavItem = {

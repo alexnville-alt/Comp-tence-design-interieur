@@ -1,0 +1,115 @@
+---
+slug: equilibre
+number: 2
+title: "Équilibre : symétrie, asymétrie, poids visuel"
+summary: "Une pièce équilibrée n'est pas forcément symétrique — elle répartit son « poids visuel » de façon à ce qu'aucun côté ne domine sans raison."
+minutes: 8
+xpReward: 20
+cards:
+  - slug: equilibre-poids-visuel
+    front: "Qu'est-ce que le « poids visuel » d'un objet ?"
+    back: "L'impression de masse qu'il donne à l'œil — dépend de sa taille, sa couleur (les teintes foncées et saturées « pèsent » plus), sa densité et son contraste avec le fond, pas seulement de son poids réel."
+    topic: "equilibre"
+  - slug: equilibre-symetrie-vs-asymetrie
+    front: "La symétrie est-elle nécessaire pour un espace équilibré ?"
+    back: "Non — un espace asymétrique peut être parfaitement équilibré si le poids visuel est réparti (ex. un grand canapé d'un côté compensé par deux fauteuils plus légers de l'autre)."
+    topic: "equilibre"
+exercises:
+  - slug: equilibre-identifier-poids
+    type: QUIZ_MCQ
+    prompt: "Deux étagères identiques en taille encadrent une fenêtre : l'une est chargée de livres et d'objets, l'autre presque vide. Que se passe-t-il visuellement ?"
+    explanation: "Le poids visuel dépend de la densité, pas seulement de la taille : l'étagère chargée « pèse » bien plus à l'œil que l'étagère vide, même si les deux meubles sont identiques."
+    choices:
+      - "Rien, les deux étagères ont la même taille donc le même poids visuel"
+      - "L'étagère chargée pèse visuellement plus lourd que l'étagère vide"
+      - "L'étagère vide pèse toujours plus lourd"
+      - "Le poids visuel ne dépend que de la couleur"
+    correctIndices: [1]
+  - slug: equilibre-verite-symetrie-obligatoire
+    type: QUIZ_TRUE_FALSE
+    prompt: "Un espace doit toujours être symétrique pour paraître équilibré."
+    explanation: "Faux : un espace asymétrique peut être parfaitement équilibré si le poids visuel de chaque côté est comparable — la symétrie n'est qu'une des façons d'atteindre l'équilibre, pas la seule."
+    statement: "Un espace doit toujours être symétrique pour paraître équilibré."
+    correct: false
+---
+
+<Texte n={1} titre="Le canapé qui bascule tout d'un côté">
+
+Un salon avec un grand canapé sombre d'un côté et rien de comparable de
+l'autre donne une impression de bascule, même si l'espace au sol est
+parfaitement réparti. Ce n'est pas une question de mètres carrés : c'est une
+question d'équilibre visuel.
+
+</Texte>
+
+<Texte n={2} titre="Le poids visuel, pas seulement la taille">
+
+Chaque objet a un « poids visuel » : l'impression de masse qu'il donne à
+l'œil. Il dépend de la taille, mais aussi de la couleur (une teinte foncée
+ou saturée « pèse » plus qu'une teinte claire), de la densité (un meuble
+chargé pèse plus qu'un meuble vide) et du contraste avec le fond. Équilibrer
+une pièce, c'est répartir ce poids visuel — pas nécessairement répartir les
+mètres carrés à l'identique.
+
+</Texte>
+
+<ImageAnnotee n={3} legende="Deux façons d'équilibrer la même pièce : symétrie stricte à gauche, asymétrie compensée à droite — un grand canapé sombre équilibré par deux fauteuils clairs.">
+
+<svg viewBox="0 0 400 200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="10" width="170" height="180" fill="none" stroke="var(--border-strong)" strokeWidth="2" />
+  <rect x="30" y="30" width="60" height="35" fill="var(--accent)" />
+  <rect x="130" y="30" width="60" height="35" rx="0" fill="var(--accent)" transform="translate(-30,0)" />
+  <text x="95" y="90" textAnchor="middle" fontSize="11" fill="currentColor">Symétrie stricte</text>
+
+  <rect x="220" y="10" width="170" height="180" fill="none" stroke="var(--border-strong)" strokeWidth="2" />
+  <rect x="240" y="30" width="90" height="35" fill="var(--danger)" />
+  <rect x="345" y="30" width="30" height="25" fill="var(--success)" />
+  <rect x="345" y="65" width="30" height="25" fill="var(--success)" />
+  <text x="305" y="90" textAnchor="middle" fontSize="11" fill="currentColor">Asymétrie compensée</text>
+</svg>
+
+</ImageAnnotee>
+
+<AllerPlusLoin n={4} titre="Pourquoi l'asymétrie compensée est souvent préférée">
+
+La symétrie stricte donne une impression de formalité, parfois perçue comme
+figée ou impersonnelle — c'est pourquoi le style classique français en use
+largement (niveau 3, styles décoratifs), tandis que la plupart des
+intérieurs contemporains préfèrent l'asymétrie compensée : elle paraît plus
+naturelle et vivante, tout en restant équilibrée si le poids visuel est bien
+réparti.
+
+</AllerPlusLoin>
+
+<ErreurFrequente n={5}>
+
+Confondre équilibre et symétrie, et donc croire qu'un espace asymétrique est
+nécessairement déséquilibré. C'est le poids visuel qui compte, pas la
+disposition géométrique : un grand canapé sombre peut très bien être
+équilibré par deux éléments plus légers mais bien choisis de l'autre côté.
+
+</ErreurFrequente>
+
+<ConseilDePro n={6} auteur="méthode d'atelier">
+
+Pour juger l'équilibre d'une pièce, plissez les yeux jusqu'à ne plus voir
+que des masses floues de couleur — sans détail. Si une zone de la pièce
+« attire » nettement plus l'œil qu'une autre sans raison voulue, l'équilibre
+n'est pas encore atteint.
+
+</ConseilDePro>
+
+<Texte n={7} titre="À vous de jouer">
+
+Prenez une photo de votre pièce et regardez-la en plissant les yeux (ou
+floutez-la avec une application). Une zone domine-t-elle nettement les
+autres ? Si oui, identifiez ce qui pourrait compenser ce poids visuel de
+l'autre côté : une couleur, une plante, un miroir, un luminaire.
+
+</Texte>
+
+<ARetenir n={8} points={[
+  "Le poids visuel dépend de la taille, la couleur et la densité d'un objet — pas seulement de sa taille.",
+  "Un espace asymétrique peut être parfaitement équilibré si le poids visuel est réparti des deux côtés.",
+  "Plisser les yeux pour ne voir que des masses de couleur révèle les déséquilibres réels d'une pièce."
+]} />

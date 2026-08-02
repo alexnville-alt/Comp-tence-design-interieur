@@ -64,6 +64,24 @@ exercises:
         label: "Tapis"
         correct: false
 
+  - slug: eval-decouverte-referentiel
+    type: QUIZ_MCQ
+    prompt: "Sur 12 photos de séjours que vous aimez, un même ton de bois clair revient sur 9 d'entre elles. Que représente-t-il dans votre référentiel de goût ?"
+    explanation: "Une constante — un élément qui revient dans la majorité des exemples aimés, jamais un jugement porté sur une seule photo isolée."
+    choices:
+      - "Une exception à ignorer"
+      - "Une constante de votre référentiel"
+      - "Une contrainte budgétaire"
+      - "Le style unique à adopter partout"
+    correctIndices: [1]
+
+  - slug: eval-decouverte-mesures
+    type: QUIZ_TRUE_FALSE
+    prompt: "Vrai ou faux : la hauteur sous plafond maximale d'une pièce suffit pour vérifier qu'un meuble haut y passera partout."
+    explanation: "Faux : une poutre, une pente de toit ou un faux plafond peuvent réduire la hauteur libre réelle à certains endroits — c'est cette hauteur réduite qui compte, pas la hauteur maximale de la pièce."
+    statement: "La hauteur sous plafond maximale d'une pièce suffit pour vérifier qu'un meuble haut y passera partout."
+    correct: false
+
   - slug: eval-decouverte-cas-salon-nord
     type: OPEN_CASE
     prompt: "Appliquez la grille de lecture en 5 questions à ce salon, et justifiez votre lecture."

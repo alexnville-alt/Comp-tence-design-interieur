@@ -29,6 +29,11 @@ import { aiProvider } from "../src/lib/ai/provider";
 import { ContentValidationError } from "../src/lib/content/frontmatter";
 import { scanLibrary } from "../src/lib/content/library-registry";
 import { scanContent } from "../src/lib/content/registry";
+import {
+  scanChallenges,
+  scanFamousInteriors,
+  scanMilestoneProjects,
+} from "../src/lib/content/transverse-registry";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -212,6 +217,73 @@ async function syncBadges(): Promise<number> {
   return BADGES.length;
 }
 
+/** Intérieurs célèbres (docs/06 §4.2, M11) — même mécanisme d'upsert par clé naturelle que le reste de ce script. */
+async function syncFamousInteriors(contentRoot: string): Promise<number> {
+  const items = scanFamousInteriors(contentRoot).map((entry) => entry.frontmatter);
+  for (const item of items) {
+    const data = {
+      name: item.name,
+      architect: item.architect,
+      year: item.year,
+      location: item.location,
+      context: item.context,
+      designIntent: item.designIntent,
+      light: item.light,
+      materials: item.materials,
+      circulation: item.circulation,
+      takeaways: item.takeaways,
+      order: item.order,
+    };
+    await prisma.famousInterior.upsert({
+      where: { slug: item.slug },
+      update: data,
+      create: { ...data, slug: item.slug },
+    });
+  }
+  return items.length;
+}
+
+/** Projets jalons (docs/06 §2, M11) — un par phase, même mécanisme d'upsert. */
+async function syncMilestoneProjects(contentRoot: string): Promise<number> {
+  const items = scanMilestoneProjects(contentRoot).map((entry) => entry.frontmatter);
+  for (const item of items) {
+    const data = {
+      phase: item.phase,
+      title: item.title,
+      brief: item.brief,
+      deliverables: item.deliverables,
+      evaluationCriteria: item.evaluationCriteria,
+    };
+    await prisma.milestoneProject.upsert({
+      where: { slug: item.slug },
+      update: data,
+      create: { ...data, slug: item.slug },
+    });
+  }
+  return items.length;
+}
+
+/** Défis hebdomadaires (docs/06 §4.3, M11) — même mécanisme d'upsert. */
+async function syncChallenges(contentRoot: string): Promise<number> {
+  const items = scanChallenges(contentRoot).map((entry) => entry.frontmatter);
+  for (const item of items) {
+    const data = {
+      weekIndex: item.weekIndex,
+      title: item.title,
+      scenario: item.scenario,
+      constraint: item.constraint,
+      gradingNotes: item.gradingNotes,
+      maxScore: item.maxScore,
+    };
+    await prisma.challenge.upsert({
+      where: { slug: item.slug },
+      update: data,
+      create: { ...data, slug: item.slug },
+    });
+  }
+  return items.length;
+}
+
 async function main() {
   const contentRoot = join(__dirname, "..", "content");
   const registry = scanContent(contentRoot);
@@ -331,12 +403,16 @@ async function main() {
 
   const libraryItemCount = await syncLibrary(contentRoot);
   const badgeCount = await syncBadges();
+  const famousInteriorCount = await syncFamousInteriors(contentRoot);
+  const milestoneProjectCount = await syncMilestoneProjects(contentRoot);
+  const challengeCount = await syncChallenges(contentRoot);
 
   console.warn(
     `✓ Contenu synchronisé : ${registry.levels.length} niveaux, ${chapterCount} chapitres, ` +
       `${lessonCount} leçons, ${exerciseCount} exercices, ${cardCount} cartes, ` +
       `${assessmentCount} évaluations, ${libraryItemCount} fiches bibliothèque, ` +
-      `${badgeCount} badges.`,
+      `${badgeCount} badges, ${famousInteriorCount} intérieurs célèbres, ` +
+      `${milestoneProjectCount} projets jalons, ${challengeCount} défis.`,
   );
 }
 

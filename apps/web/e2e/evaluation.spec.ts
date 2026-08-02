@@ -82,6 +82,15 @@ async function passAssessment(page: Page): Promise<void> {
   await hotspot.getByRole("checkbox", { name: "Cheminée" }).check();
   await hotspot.getByRole("button", { name: "Valider" }).click();
 
+  const referentiel = page.locator('[data-exercise-slug="eval-decouverte-referentiel"]');
+  await referentiel
+    .getByRole("checkbox", { name: "Une constante de votre référentiel" })
+    .check();
+  await referentiel.getByRole("button", { name: "Valider" }).click();
+
+  const mesures = page.locator('[data-exercise-slug="eval-decouverte-mesures"]');
+  await mesures.getByRole("button", { name: "Faux" }).click();
+
   // Cas ouvert (OPEN_CASE, M5) : corrigé par l'IA (l'adaptateur factice en
   // E2E, AI_PROVIDER=fake) — la note s'affiche de façon asynchrone.
   const openCase = page.locator('[data-exercise-slug="eval-decouverte-cas-salon-nord"]');

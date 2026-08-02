@@ -1,0 +1,122 @@
+---
+slug: circulation-distances-qui-ne-se-negocient-pas
+number: 1
+title: "Circulation : les distances qui ne se négocient pas (60 / 90 / 120 cm)"
+summary: "Trois largeurs de passage à connaître par cœur — en dessous, une pièce devient inconfortable ou dangereuse, quel que soit le style choisi."
+minutes: 8
+xpReward: 20
+cards:
+  - slug: circulation-60cm
+    front: "60 cm : quelle circulation minimale cette largeur représente-t-elle ?"
+    back: "Le passage le plus étroit tolérable, pour se glisser occasionnellement entre deux meubles fixes — jamais un passage principal ni fréquent."
+    topic: "circulation"
+  - slug: circulation-90cm
+    front: "90 cm : quelle circulation cette largeur représente-t-elle ?"
+    back: "Le passage confortable standard pour un trajet régulier à une personne — la largeur à viser pour la plupart des circulations internes d'une pièce."
+    topic: "circulation"
+  - slug: circulation-120cm
+    front: "120 cm : quelle circulation cette largeur représente-t-elle ?"
+    back: "Le passage nécessaire pour deux personnes qui se croisent, ou pour un passage principal très fréquenté (couloir d'entrée, axe entre deux pièces)."
+    topic: "circulation"
+exercises:
+  - slug: circulation-associer-largeurs
+    type: QUIZ_MATCH
+    prompt: "Associez chaque largeur de passage à son usage."
+    explanation: "60 cm pour un passage occasionnel étroit, 90 cm pour un trajet régulier confortable, 120 cm pour deux personnes qui se croisent ou un axe très fréquenté."
+    pairs:
+      - left: "60 cm"
+        right: "Passage occasionnel, le minimum tolérable"
+      - left: "90 cm"
+        right: "Trajet régulier confortable à une personne"
+      - left: "120 cm"
+        right: "Deux personnes qui se croisent, ou axe très fréquenté"
+  - slug: circulation-verite-45cm
+    type: QUIZ_TRUE_FALSE
+    prompt: "Un passage de 45 cm entre deux meubles est acceptable tant qu'il n'est emprunté qu'occasionnellement."
+    explanation: "Faux : 60 cm est déjà le minimum tolérable pour un passage occasionnel — en dessous, même un usage rare devient inconfortable et peut être dangereux (dégagement de porte de meuble, évacuation)."
+    statement: "Un passage de 45 cm entre deux meubles est acceptable tant qu'il n'est emprunté qu'occasionnellement."
+    correct: false
+---
+
+<Texte n={1} titre="La pièce où l'on se cogne">
+
+Un salon peut être esthétiquement réussi et pourtant désagréable à vivre au
+quotidien, si l'on doit se tourner de biais pour passer entre la table
+basse et le canapé. La circulation n'est pas un détail technique secondaire
+— c'est ce qui détermine si une pièce se vit bien ou se subit.
+
+</Texte>
+
+<Texte n={2} titre="Trois largeurs à connaître par cœur">
+
+Trois largeurs de passage structurent toute circulation intérieure : 60 cm,
+le minimum tolérable pour un passage occasionnel et étroit ; 90 cm, le
+confort standard pour un trajet régulier à une personne ; 120 cm, nécessaire
+pour que deux personnes se croisent ou pour un axe très fréquenté. Ces
+distances ne sont pas des recommandations esthétiques : ce sont des
+contraintes physiques, valables quel que soit le style choisi.
+
+</Texte>
+
+<ImageAnnotee n={3} legende="Trois circulations dans un même séjour : 60 cm entre canapé et table basse (occasionnel), 90 cm pour l'axe principal, 120 cm dans le passage d'entrée le plus fréquenté.">
+
+<svg viewBox="0 0 400 220" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="10" width="380" height="200" fill="none" stroke="var(--border-strong)" strokeWidth="2" />
+
+  <rect x="40" y="40" width="140" height="50" fill="var(--accent-subtle)" stroke="var(--accent)" />
+  <text x="110" y="70" textAnchor="middle" fontSize="11" fill="currentColor">Canapé</text>
+  <rect x="40" y="105" width="90" height="30" fill="var(--success-subtle)" stroke="var(--success)" />
+  <text x="85" y="123" textAnchor="middle" fontSize="10" fill="currentColor">Table basse</text>
+  <line x1="40" y1="95" x2="130" y2="95" stroke="var(--danger)" strokeWidth="2" strokeDasharray="4 3" />
+  <text x="85" y="102" textAnchor="middle" fontSize="9" fill="var(--danger)">60 cm</text>
+
+  <line x1="200" y1="20" x2="200" y2="200" stroke="var(--accent)" strokeWidth="2" strokeDasharray="4 3" />
+  <text x="200" y="15" textAnchor="middle" fontSize="9" fill="var(--accent)">Axe principal, 90 cm</text>
+
+  <rect x="300" y="10" width="70" height="200" fill="none" />
+  <line x1="300" y1="100" x2="370" y2="100" stroke="var(--success)" strokeWidth="2" strokeDasharray="4 3" />
+  <text x="335" y="95" textAnchor="middle" fontSize="9" fill="var(--success)">Entrée, 120 cm</text>
+</svg>
+
+</ImageAnnotee>
+
+<AllerPlusLoin n={4} titre="Une contrainte qui devient un critère objectif du logiciel">
+
+Ces trois largeurs ne sont pas propres à ce cours : elles reprennent les
+standards d'ergonomie utilisés en architecture d'intérieur professionnelle.
+C'est aussi pour cela qu'elles sont vérifiées automatiquement dans
+l'atelier de simulation (module 4) — un passage sous le seuil déclenche une
+alerte, indépendamment du style ou du budget du projet.
+
+</AllerPlusLoin>
+
+<ErreurFrequente n={5}>
+
+Placer tous les meubles d'abord, « pour voir », et ne vérifier la
+circulation qu'à la fin. La circulation doit être la première contrainte
+posée, avant le choix esthétique du mobilier — un meuble magnifique qui
+bloque un passage à 90 cm sera toujours retiré ou déplacé tôt ou tard.
+
+</ErreurFrequente>
+
+<ConseilDePro n={6} auteur="méthode d'atelier">
+
+Matérialisez au sol, avec du ruban adhésif, les largeurs de 60, 90 et
+120 cm une bonne fois pour toutes — vous n'aurez alors plus jamais besoin
+de mètre ruban pour juger un passage à l'œil dans n'importe quelle pièce.
+
+</ConseilDePro>
+
+<Texte n={7} titre="À vous de jouer">
+
+Mesurez les passages actuels de votre pièce (entre les meubles, vers les
+portes). Identifiez ceux qui sont sous 60 cm : ce sont les premiers à
+corriger, avant tout autre changement esthétique.
+
+</Texte>
+
+<ARetenir n={8} points={[
+  "60 cm : minimum tolérable pour un passage occasionnel. 90 cm : confort standard. 120 cm : deux personnes qui se croisent.",
+  "Ces largeurs sont des contraintes physiques, valables quel que soit le style choisi.",
+  "La circulation se vérifie avant le choix esthétique du mobilier, jamais après."
+]} />

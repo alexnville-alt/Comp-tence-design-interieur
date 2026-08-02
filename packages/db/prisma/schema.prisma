@@ -1,13 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Schéma Prisma — Atelier
 //
-// Périmètre M1+M2+M3+M4+M5+M6+M7+M8+M9+M10 : identité, profil, onboarding,
+// Périmètre M1+M2+M3+M4+M5+M6+M7+M8+M9+M10+M11 : identité, profil, onboarding,
 // curriculum, leçons, exercices notés, évaluations de fin de niveau,
 // répétition espacée, atelier 2D, couche IA, analyse photo, bibliothèque,
 // générateurs (palettes, moodboards, listes de mobilier), progression
-// (XP, séries, badges, temps réel) et projet personnel (plans importés
-// calibrés, photos par pièce, journal). Le schéma complet est spécifié dans
-// docs/04-modele-de-donnees.md ; il est livré par module. On ne crée pas
+// (XP, séries, badges, temps réel), projet personnel (plans importés
+// calibrés, photos par pièce, journal) et contenu transverse des 15 niveaux
+// (intérieurs célèbres, projets jalons, défis hebdomadaires). Le schéma
+// complet est spécifié dans docs/04-modele-de-donnees.md ; il est livré par
+// module. On ne crée pas
 // trente tables inutilisées : chaque migration accompagne la fonctionnalité
 // qui s'en sert, ce qui garde les migrations relisibles.
 //
@@ -22,7 +24,10 @@
 // pas d'enum sans code capable de le traiter. Correction par rapport à une
 // note laissée ici en M5 : CHALLENGE (défi hebdomadaire) n'est pas de la
 // gamification (M9, cette section) mais du contenu — « Défis hebdomadaires »
-// figure sous M11 (docs/05 §M11, exécuté en parallèle dès M3), pas M9.
+// figure sous M11 (docs/05 §M11, exécuté en parallèle dès M3), pas M9. M11
+// (voir plus bas) confirme que `ExerciseType.CHALLENGE` reste inutile : un
+// défi hebdomadaire vit dans son propre modèle `Challenge`, jamais dans
+// `Exercise`.
 //
 // M4 s'écarte de docs/04 §3.6 sur deux points, documentés dans le rapport de
 // livraison : pas de `Room.currentVersionId` (la version courante est la
@@ -63,6 +68,23 @@
 // bonne part de PROJ-01/04 (créer un projet, saisir des dimensions) sont
 // déjà couverts par l'atelier 2D existant (M4) — pas de nouveau modèle pour
 // eux ici.
+//
+// M11 ajoute `FamousInterior`, `MilestoneProject`, `Challenge` et
+// `ChallengeSubmission` (docs/06 §4, « contenus transverses »). Les deux
+// premiers sont du contenu déclaratif pur, sans aucune table de suivi côté
+// utilisateur : un projet jalon guide l'apprenant à utiliser l'atelier (M4)
+// et les générateurs (M8) sur son propre logement, sans mécanique nouvelle.
+// Un défi hebdomadaire est corrigé par l'IA sur le même barème qu'un
+// OPEN_CASE (docs/06 §1.3) mais vit dans son propre modèle plutôt que
+// `Exercise`/`Submission` : un défi n'appartient à aucune leçon ni
+// évaluation, et `Exercise.lessonId`/`assessmentId` tous deux `null`
+// affaiblirait les contraintes d'unicité existantes (NULL n'égale jamais
+// NULL en SQL). Les intérieurs célèbres n'ont aucune image : docs/06 §4.2
+// exige des « schémas redessinés, jamais des photographies sous droits »,
+// et cette livraison va plus loin — sans pipeline d'illustration disponible
+// (même constat que les fiches bibliothèque, M7), la grille d'analyse reste
+// entièrement textuelle plutôt que de risquer un schéma faussement présenté
+// comme fidèle.
 // ─────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -107,22 +129,23 @@ model User {
   /// l'application, la purge physique est différée (RGPD, AUTH-04).
   deletedAt DateTime?
 
-  profile             Profile?
-  accounts            Account[]
-  sessions            Session[]
-  passwordResetTokens PasswordResetToken[]
-  lessonProgress      LessonProgress[]
-  levelProgress       LevelProgress[]
-  submissions         Submission[]
-  cardReviews         CardReview[]
-  projects            Project[]
-  conversations       AiConversation[]
-  aiUsage             AiUsage[]
-  assets              Asset[]
-  favorites           Favorite[]
-  xpEvents            XpEvent[]
-  badges              UserBadge[]
-  studySessions       StudySession[]
+  profile              Profile?
+  accounts             Account[]
+  sessions             Session[]
+  passwordResetTokens  PasswordResetToken[]
+  lessonProgress       LessonProgress[]
+  levelProgress        LevelProgress[]
+  submissions          Submission[]
+  cardReviews          CardReview[]
+  projects             Project[]
+  conversations        AiConversation[]
+  aiUsage              AiUsage[]
+  assets               Asset[]
+  favorites            Favorite[]
+  xpEvents             XpEvent[]
+  badges               UserBadge[]
+  studySessions        StudySession[]
+  challengeSubmissions ChallengeSubmission[]
 
   @@index([deletedAt])
 }
@@ -773,11 +796,11 @@ model PhotoAnalysis {
 /// par `LibraryItemFrontmatterSchema` (`@atelier/domain`) à la
 /// synchronisation, jamais par une contrainte de base.
 model LibraryItem {
-  id          String      @id @default(cuid())
-  slug        String      @unique
-  category    LibCategory
-  name        String
-  summary     String
+  id       String      @id @default(cuid())
+  slug     String      @unique
+  category LibCategory
+  name     String
+  summary  String
 
   description   String
   pros          String[]
@@ -792,7 +815,7 @@ model LibraryItem {
   /// fiche peut citer un style avant qu'il ne soit synchronisé dans le même
   /// lot (`content:sync` valide l'existence après coup, comme les relations).
   styles        String[]
-  noWorksNeeded Boolean     @default(false)
+  noWorksNeeded Boolean    @default(false)
 
   attributes Json
 
@@ -931,16 +954,16 @@ model MoodboardItem {
   libraryItem   LibraryItem? @relation(fields: [libraryItemId], references: [id], onDelete: SetNull)
   /// Vignette de la fiche liée, si elle en a une — jamais une URL directe
   /// (ADR-0008) : toujours re-présignée à l'affichage.
-  assetId String?
-  asset   Asset?  @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  assetId       String?
+  asset         Asset?       @relation(fields: [assetId], references: [id], onDelete: SetNull)
   /// Uniquement pour un item de palette (pas de `libraryItemId`).
-  colorHex String?
-  label    String?
+  colorHex      String?
+  label         String?
   /// Position/taille/rotation dans l'espace logique du plateau (1600×1200
   /// unités, indépendant du pixel écran — voir `packages/domain/src/generators`),
   /// validées par `MoodboardTransformSchema` avant écriture (`{x,y,w,h,z,rotation}`).
-  transform Json
-  createdAt DateTime @default(now())
+  transform     Json
+  createdAt     DateTime     @default(now())
 
   @@index([moodboardId])
 }
@@ -951,11 +974,11 @@ model MoodboardItem {
 /// écriture, source de vérité derrière `Profile.totalXp` (compteur
 /// dénormalisé, recalculable depuis cette table).
 model XpEvent {
-  id     String   @id @default(cuid())
-  userId String
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount Int
-  reason XpReason
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    XpReason
   /// Leçon, exercice ou évaluation à l'origine du gain — facultatif (ex. STREAK
   /// n'a pas de ressource à référencer).
   refId     String?
@@ -984,19 +1007,19 @@ enum XpReason {
 /// compteurs nommés) — jamais par une requête ad hoc par badge, pour que
 /// débloquer un nouveau badge se limite à ajouter une entrée ici.
 model Badge {
-  id          String @id @default(cuid())
-  slug        String @unique
+  id          String      @id @default(cuid())
+  slug        String      @unique
   title       String
   description String
   /// Nom d'icône `lucide-react` (`apps/web`) — pas d'image dédiée, même
   /// raisonnement que `LibraryItem.imageAssetId` (M7) : aucun pipeline de
   /// curation visuelle en périmètre.
-  icon String
+  icon        String
   /// `{ type: "streak", days } | { type: "level_complete", level } |
   /// { type: "count", metric, gte }` — voir `BadgeCriteriaSchema`
   /// (`@atelier/domain`).
-  criteria Json
-  users    UserBadge[]
+  criteria    Json
+  users       UserBadge[]
 }
 
 model UserBadge {
@@ -1022,7 +1045,7 @@ model StudySession {
   activeMs  Int       @default(0)
   /// "lesson:<id>" | "studio" | "review" — contexte libre, jamais interrogé
   /// par égalité stricte, seulement affiché.
-  context String?
+  context   String?
 
   @@index([userId, startedAt])
 }
@@ -1037,13 +1060,13 @@ model StudySession {
 /// consultable même si la pièce de l'atelier qu'elle documentait a depuis
 /// été supprimée.
 model ProjectAsset {
-  id        String  @id @default(cuid())
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assetId   String
-  asset     Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  roomId    String?
-  caption   String?
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  roomId      String?
+  caption     String?
   /// `{ refPointA: {x,y}, refPointB: {x,y}, refLengthCm, cmPerPixel }` —
   /// présent seulement pour un plan calibré (`asset.kind = FLOOR_PLAN`),
   /// calculé par `computeCalibration` (`@atelier/domain`) et jamais recalculé
@@ -1078,4 +1101,87 @@ enum JournalKind {
   DECISION
   QUESTION
   BUDGET
+}
+
+// ── Contenu transverse des 15 niveaux (M11, docs/06 §4) ────────────────────
+
+/// Étude d'un intérieur célèbre — grille d'analyse commune, jamais d'image
+/// (voir la note en tête de fichier). Contenu pur synchronisé depuis
+/// `content/interieurs-celebres/*.mdx` (ADR-0010), pas de suivi utilisateur.
+model FamousInterior {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  architect    String
+  year         String
+  location     String
+  context      String
+  /// Le parti pris architectural (docs/06 §4.2).
+  designIntent String
+  light        String
+  materials    String
+  circulation  String
+  /// Ce qu'on peut en retenir chez soi (docs/06 §4.2).
+  takeaways    String[]
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([order])
+}
+
+/// Le brief d'un projet jalon (un par phase, docs/06 §2) — contenu pur,
+/// aucune mécanique de suivi : voir la note en tête de fichier.
+model MilestoneProject {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  phase              Int      @unique
+  title              String
+  brief              String
+  deliverables       String[]
+  evaluationCriteria String[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+/// Défi hebdomadaire (docs/06 §4.3) — corrigé par l'IA sur le même barème
+/// qu'un OPEN_CASE (docs/06 §1.3, `OPEN_CASE_RUBRIC`), volontairement séparé
+/// d'`Exercise` : voir la note en tête de fichier.
+model Challenge {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  /// Ordre de rotation (1 = le plus ancien) — pas une vraie date de semaine
+  /// calendaire, pour rester rejouable en développement/CI sans horloge.
+  weekIndex    Int      @unique
+  title        String
+  scenario     String
+  constraint   String
+  /// Guidage d'auteur pour la correction IA — jamais envoyé au client,
+  /// comme `Exercise.payload.gradingNotes` pour un OPEN_CASE.
+  gradingNotes String
+  maxScore     Int      @default(100)
+  createdAt    DateTime @default(now())
+
+  submissions ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  answer     String
+  /// `score`/`scoreRatio` calculés côté serveur par la même conversion que
+  /// `submitOpenCaseAction` — jamais acceptés depuis le client.
+  score      Int
+  scoreRatio Float
+  /// Retour structuré de la correction IA — `GradingFeedbackSchema`
+  /// (@atelier/domain), même forme que `Submission.feedback` pour OPEN_CASE.
+  feedback   Json
+  attempt    Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, challengeId])
 }

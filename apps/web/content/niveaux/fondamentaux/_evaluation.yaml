@@ -1,0 +1,98 @@
+title: "Évaluation — Fondamentaux"
+passingScore: 70
+exercises:
+  - slug: eval-fondamentaux-echelle
+    type: QUIZ_MCQ
+    prompt: "Qu'est-ce qui détermine si un meuble est « à la bonne échelle » ?"
+    explanation: "L'échelle se juge toujours par rapport à la pièce qui l'entoure, jamais dans l'absolu — voir la leçon « Proportions et échelle »."
+    choices:
+      - "Sa taille absolue en centimètres"
+      - "Son prix"
+      - "Son rapport à la pièce qui l'entoure"
+      - "Le nombre de meubles similaires vendus"
+    correctIndices: [2]
+
+  - slug: eval-fondamentaux-poids-visuel
+    type: QUIZ_TRUE_FALSE
+    prompt: "Vrai ou faux : une pièce doit toujours être symétrique pour être équilibrée."
+    explanation: "Faux : un espace asymétrique peut être parfaitement équilibré si le poids visuel de chaque côté est comparable."
+    statement: "Une pièce doit toujours être symétrique pour être équilibrée."
+    correct: false
+
+  - slug: eval-fondamentaux-rythme
+    type: QUIZ_MCQ
+    prompt: "Combien de répétitions minimum sont généralement nécessaires pour qu'un rappel de couleur ou de matière soit perçu comme intentionnel ?"
+    explanation: "Deux occurrences peuvent sembler accidentelles ; la troisième confirme l'intention aux yeux de l'observateur."
+    choices:
+      - "Une seule"
+      - "Deux"
+      - "Trois"
+      - "Cinq"
+    correctIndices: [2]
+
+  - slug: eval-fondamentaux-circulation
+    type: QUIZ_MATCH
+    prompt: "Associez chaque largeur de circulation à son usage."
+    explanation: "Voir la leçon « Circulation : les distances qui ne se négocient pas »."
+    pairs:
+      - left: "60 cm"
+        right: "Passage occasionnel, le minimum tolérable"
+      - left: "90 cm"
+        right: "Trajet régulier confortable à une personne"
+      - left: "120 cm"
+        right: "Deux personnes qui se croisent"
+
+  - slug: eval-fondamentaux-zonage-ordre
+    type: QUIZ_ORDER
+    prompt: "Remettez dans l'ordre les étapes d'un bon zonage."
+    explanation: "On part toujours des usages réels, jamais de la forme de la pièce — voir la leçon « Zonage »."
+    items:
+      - "Lister les usages réels de la pièce"
+      - "Identifier le temps passé dans chaque usage"
+      - "Tracer les circulations principales entre les zones"
+      - "Choisir un délimiteur pour chaque zone (tapis, orientation, éclairage)"
+
+  - slug: eval-fondamentaux-hotspot-point-focal
+    type: HOTSPOT
+    prompt: "Ce séjour n'a ni cheminée ni fenêtre marquante. Cliquez sur l'emplacement le plus efficace pour créer un point focal."
+    explanation: "Le mur du fond, face à l'entrée principale, est le premier élément vu en entrant — l'emplacement le plus efficace pour créer un point focal quand aucun n'existe naturellement."
+    imageLabel: "Schéma d'un séjour rectangulaire avec une entrée, un mur latéral et un mur du fond face à l'entrée"
+    zones:
+      - x: 30
+        y: 50
+        radius: 12
+        label: "Mur latéral gauche"
+        correct: false
+      - x: 70
+        y: 30
+        radius: 12
+        label: "Mur du fond, face à l'entrée"
+        correct: true
+      - x: 70
+        y: 80
+        radius: 10
+        label: "Mur près de l'entrée"
+        correct: false
+
+  - slug: eval-fondamentaux-cas-sejour-28m2
+    type: OPEN_CASE
+    prompt: "Proposez un zonage complet pour ce séjour, en appliquant les principes du niveau."
+    scenario: >-
+      Un séjour ouvert de 28 m², rectangulaire, avec une seule entrée dans un
+      angle et une baie vitrée sur le mur opposé. Le foyer souhaite un coin
+      repas pour quatre personnes, un coin détente avec canapé, et un coin
+      lecture avec un fauteuil. Aucune cloison ne doit être posée.
+    constraint: >-
+      Proposez un découpage en trois zones avec, pour chacune, son
+      délimiteur (tapis, orientation du mobilier ou éclairage) et vérifiez
+      que la circulation principale reste au moins à 90 cm.
+    gradingNotes: >-
+      Une bonne réponse propose trois zones distinctes avec un délimiteur
+      explicite pour chacune (pas seulement une disposition de meubles),
+      positionne le coin repas ou détente en cohérence avec la lumière
+      naturelle de la baie vitrée, et vérifie explicitement une largeur de
+      circulation d'au moins 90 cm sur l'axe principal entre l'entrée et le
+      reste de la pièce. Une réponse qui ignore la circulation ou qui ne
+      délimite aucune zone (simple liste de meubles) manque le critère
+      « réponse à la contrainte ». Vocabulaire attendu : zone, délimiteur,
+      circulation, point focal (leçons du niveau Fondamentaux).

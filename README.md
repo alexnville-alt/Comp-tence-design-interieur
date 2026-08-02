@@ -23,27 +23,28 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 | **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée                                |
 | **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée                                |
 | **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée                                |
-| **M10**     | Projet personnel (plan calibré, journal, architecte accompagnateur, PDF) | ✅ Livrée — **en attente de validation** |
-| M11 → M12   | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
+| **M10**     | Projet personnel (plan calibré, journal, architecte accompagnateur, PDF) | ✅ Livrée                                |
+| **M11**     | Contenu des 15 niveaux (leçons, intérieurs célèbres, jalons, défis)      | ✅ Livrée — **en attente de validation** |
+| M12         | Voir la feuille de route                                                 | ⏸️ Bloqué par validation                 |
 
 Conformément à la méthodologie demandée, chaque module attend une validation
 explicite avant que le suivant ne démarre. Historique des livraisons : commits
 `feat(m0,m1)`, `feat(m2)`, `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`,
-`feat(m7)`, `feat(m8)`, `feat(m9)`, `feat(m10)` sur la branche
+`feat(m7)`, `feat(m8)`, `feat(m9)`, `feat(m10)`, `feat(m11)` sur la branche
 `claude/interior-design-learning-platform-bam6l6`.
 
-**État à la fin de M10** — 518 tests unitaires, 47 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 25 écrans/flux, en thème clair et sombre),
+**État à la fin de M11** — 556 tests unitaires, 50 tests de bout en bout (dont
+l'audit d'accessibilité axe-core sur 28 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
 | Vérification                 | Commande            | Résultat                                       |
 | ---------------------------- | ------------------- | ---------------------------------------------- |
-| Tests unitaires              | `pnpm test`         | 518 ✅ (domaine 306 · IA 62 · app 117 · ui 33) |
-| Bout en bout + accessibilité | `pnpm e2e`          | 47 ✅                                          |
+| Tests unitaires              | `pnpm test`         | 556 ✅ (domaine 332 · IA 62 · app 129 · ui 33) |
+| Bout en bout + accessibilité | `pnpm e2e`          | 50 ✅                                          |
 | Types (6 paquets)            | `pnpm typecheck`    | ✅                                             |
 | Lint (6 paquets)             | `pnpm lint`         | ✅                                             |
 | Format                       | `pnpm format:check` | ✅                                             |
-| Build de production          | `pnpm build`        | ✅ 32 routes                                   |
+| Build de production          | `pnpm build`        | ✅ 38 routes                                   |
 
 Le paquet domaine (`packages/domain`) reste à ~99,6 % de couverture de
 lignes — FSRS-6 (`srs/`), la correction d'exercices (`exercises/`), la
@@ -271,8 +272,39 @@ Lire dans cet ordre :
 - Versions et comparateur avant/après : déjà livrés en M4, aucun travail
   supplémentaire nécessaire pour ce module
 
+**Contenu des 15 niveaux (M11)**
+
+- Schémas de contenu transverse (`FamousInteriorFrontmatterSchema`,
+  `MilestoneProjectFrontmatterSchema`, `ChallengeFrontmatterSchema`) et
+  pipeline de synchronisation étendu (`scanFamousInteriors`,
+  `scanMilestoneProjects`, `scanChallenges`), même séparation scan pur / sync
+  Prisma que le reste du contenu (ADR-0010)
+- Niveau 1 « Découverte » complété (6 leçons, 8 exercices d'évaluation) et
+  niveau 2 « Fondamentaux » livré en entier (2 chapitres, 7 leçons, 7
+  exercices d'évaluation)
+- 12 fiches d'intérieurs célèbres (Villa Savoye, maison Farnsworth,
+  Fallingwater, casa Luis Barragán, maison de verre, villa Tugendhat,
+  Case Study House n° 8, villa Müller, maison Louis Carré, couvent de la
+  Tourette, maison Gehry, intérieur haussmannien type) — texte uniquement
+  (contexte, intention de conception, lumière, matières, circulation, points
+  à retenir), sans illustration, même choix que la bibliothèque (M7)
+- Projet jalon A (« Réaménager une pièce simple sur plan ») : contenu pur
+  (brief, livrables, critères d'évaluation) qui s'appuie sur l'atelier (M4),
+  les générateurs (M8) et le projet personnel (M10) déjà livrés — aucune
+  nouvelle mécanique de suivi ajoutée
+- 6 défis hebdomadaires, corrigés par IA avec le même barème et le même
+  ordre de vérifications (garde-fou → quota → appel IA) que les cas ouverts
+  (M5), mais persistés sur un modèle dédié (`Challenge`/`ChallengeSubmission`)
+  plutôt que réutiliser `Exercise` : un défi n'a ni `lessonId` ni
+  `assessmentId`, et les contraintes d'unicité de `Exercise` reposent sur ces
+  deux champs
+- Interface : trois nouvelles sections dans la navigation principale
+  (intérieurs célèbres, projets jalons, défis), qui remplacent l'entrée
+  « Projets » restée bloquée depuis M10 (`comingIn: "M10"` jamais résolu,
+  aucune route `/projets` n'ayant jamais existé)
+
 **Hors périmètre pour l'instant** (modules à venir, ou explicitement différés
-au sein de M7/M8/M9/M10) :
+au sein de M7/M8/M9/M10/M11) :
 
 - **Corpus de badges partiel** : 16 badges réels contre l'estimation « ~30 »
   de docs/04 §7 (volumétrie) — le mécanisme (schéma de critères, évaluation,
@@ -298,6 +330,15 @@ au sein de M7/M8/M9/M10) :
   une dépendance native supplémentaire (`canvas`, pour `pdfjs-dist`) a été
   jugée trop fragile pour cette livraison ; un plan en PDF doit d'abord être
   exporté en image avant import (voir la note en tête de `schema.prisma`)
+- **Corpus de contenu M11 très partiel** : la cible de docs/06 §5 est
+  15 niveaux / ~45 chapitres / ~92 leçons / ~350 exercices / ~450 cartes /
+  ~45 cas pratiques IA / 4 projets jalons / 24 défis ; cette livraison couvre
+  2/15 niveaux, 3/~45 chapitres, 13/~92 leçons, 38/~350 exercices, 29/~450
+  cartes, 1/4 projets jalons et 6/24 défis. Le mécanisme complet (schémas,
+  migration, pipeline de synchronisation, pages, correction IA) est en place
+  et testé — seule la rédaction du corpus restant est différée, même logique
+  que la bibliothèque (M7) et les badges (M9). Les 12 intérieurs célèbres
+  sont en revanche complets (12/12, docs/06 §4.2)
 
 ## Démarrage
 

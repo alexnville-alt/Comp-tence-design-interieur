@@ -155,6 +155,21 @@ test("accessibilité — onboarding et zone applicative", async ({ page }) => {
   await page.goto("/bibliotheque/favoris");
   await auditer(page, "bibliothèque — favoris");
 
+  await page.goto("/interieurs-celebres");
+  await auditer(page, "intérieurs célèbres — liste");
+  await page.getByRole("link", { name: /Villa Savoye/ }).click();
+  await auditer(page, "intérieurs célèbres — fiche détail");
+
+  await page.goto("/projets-jalons");
+  await auditer(page, "projets jalons — liste");
+  await page.getByRole("link", { name: /Projet jalon A/ }).click();
+  await auditer(page, "projets jalons — détail");
+
+  await page.goto("/defis");
+  await auditer(page, "défis — liste");
+  await page.getByRole("link", { name: /500 € pour transformer une entrée/ }).click();
+  await auditer(page, "défis — détail, avant réponse");
+
   await page.goto("/profil");
   await auditer(page, "profil");
 });
