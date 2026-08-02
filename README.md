@@ -30,7 +30,7 @@ explicite avant que le suivant ne démarre. Historique des livraisons : commits
 `feat(m7)`, `feat(m8)` sur la branche `claude/interior-design-learning-platform-bam6l6`.
 
 **État à la fin de M8** — 466 tests unitaires, 43 tests de bout en bout (dont
-l'audit d'accessibilité axe-core sur 20 écrans/flux, en thème clair et sombre),
+l'audit d'accessibilité axe-core sur 21 écrans/flux, en thème clair et sombre),
 lint, types et format vérifiés en intégration continue.
 
 | Vérification                 | Commande            | Résultat                                       |
