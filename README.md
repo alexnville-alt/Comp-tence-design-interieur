@@ -10,27 +10,28 @@ capable de concevoir et rénover lui-même l'intégralité de son habitation.
 
 ## État du projet
 
-| Phase       | Contenu                                                                  | Statut                                   |
-| ----------- | ------------------------------------------------------------------------ | ---------------------------------------- |
-| **Phase 0** | Cahier des charges, architecture, UX, modèle de données, roadmap         | ✅ Validée                               |
-| **M0**      | Socle technique (monorepo, CI, tokens, Docker)                           | ✅ Livrée                                |
-| **M1**      | Authentification, onboarding, profil, RGPD                               | ✅ Livrée                                |
-| **M2**      | Moteur de leçons (MDX, 11 blocs, reprise exacte, carte de parcours)      | ✅ Livrée                                |
-| **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée                                |
-| **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée                                |
-| **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée                                |
-| **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée                                |
-| **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée                                |
-| **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée                                |
-| **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée                                |
-| **M10**     | Projet personnel (plan calibré, journal, architecte accompagnateur, PDF) | ✅ Livrée                                |
-| **M11**     | Contenu des 15 niveaux (leçons, intérieurs célèbres, jalons, défis)      | ✅ Livrée                                |
-| **M12**     | Finitions et mise en production (dernier module de la feuille de route)  | ✅ Livrée — **en attente de validation** |
+| Phase       | Contenu                                                                  | Statut               |
+| ----------- | ------------------------------------------------------------------------ | -------------------- |
+| **Phase 0** | Cahier des charges, architecture, UX, modèle de données, roadmap         | ✅ Validée           |
+| **M0**      | Socle technique (monorepo, CI, tokens, Docker)                           | ✅ Livrée            |
+| **M1**      | Authentification, onboarding, profil, RGPD                               | ✅ Livrée            |
+| **M2**      | Moteur de leçons (MDX, 11 blocs, reprise exacte, carte de parcours)      | ✅ Livrée            |
+| **M3**      | Exercices notés, évaluations de fin de niveau, répétition espacée FSRS-6 | ✅ Livrée            |
+| **M4**      | Atelier 2D (plan, mobilier, circulation, versions)                       | ✅ Livrée            |
+| **M5**      | Couche IA : chat, garde-fous, quotas, correction de cas ouverts          | ✅ Livrée            |
+| **M6**      | Analyse photo (dépôt S3, garde-fous, repères, cache SHA-256)             | ✅ Livrée            |
+| **M7**      | Bibliothèque (recherche, facettes, relations, favoris, embeddings)       | ✅ Livrée            |
+| **M8**      | Générateurs (palette, moodboard, mobilier dimensionné)                   | ✅ Livrée            |
+| **M9**      | Progression et gamification (XP, séries, badges, temps réel)             | ✅ Livrée            |
+| **M10**     | Projet personnel (plan calibré, journal, architecte accompagnateur, PDF) | ✅ Livrée            |
+| **M11**     | Contenu des 15 niveaux (leçons, intérieurs célèbres, jalons, défis)      | ✅ Livrée            |
+| **M12**     | Finitions et mise en production (dernier module de la feuille de route)  | ✅ Livrée et validée |
 
-Conformément à la méthodologie demandée, chaque module attend une validation
-explicite avant que le suivant ne démarre. M12 est le dernier module de
-[docs/05](docs/05-feuille-de-route.md) : sa validation clôt le découpage
-M0→M12. Historique des livraisons : commits `feat(m0,m1)`, `feat(m2)`,
+Conformément à la méthodologie demandée, chaque module a attendu une
+validation explicite avant que le suivant ne démarre. M12 était le dernier
+module de [docs/05](docs/05-feuille-de-route.md) : sa validation clôt le
+découpage M0→M12 — **la feuille de route est intégralement livrée et
+validée**. Historique des livraisons : commits `feat(m0,m1)`, `feat(m2)`,
 `feat(m3)`, `feat(m4)`, `feat(m5)`, `feat(m6)`, `feat(m7)`, `feat(m8)`,
 `feat(m9)`, `feat(m10)`, `feat(m11)`, `feat(m12)` sur la branche
 `claude/interior-design-learning-platform-bam6l6`.
