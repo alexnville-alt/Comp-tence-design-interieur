@@ -76,7 +76,7 @@ export async function searchLibrary(
   // gabarit de requête, jamais deux), ce qui a résolu un `syntax error at or
   // near "$1"` observé sur un moteur Prisma Windows précisément quand
   // `WHERE` était absent — `Prisma.empty` semble s'y comporter différemment
-  // qu'sur les moteurs Linux/macOS testés ici.
+  // que sur les moteurs Linux/macOS testés ici.
   const whereClause =
     conditions.length > 0
       ? Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}`
