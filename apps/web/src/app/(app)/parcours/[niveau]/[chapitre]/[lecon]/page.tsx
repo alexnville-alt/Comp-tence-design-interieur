@@ -61,6 +61,30 @@ export default async function LeconPage({
     select: { blockIndex: true, status: true },
   });
 
+  // Leçon suivante dans l'ordre strict du parcours (pas la prochaine leçon
+  // incomplète — cette dernière est le rôle du tableau de bord, pas d'un
+  // bouton « continuer » affiché après avoir terminé celle-ci). Bornée au
+  // niveau courant : au-delà de son dernier chapitre, l'étape suivante est
+  // l'évaluation de niveau, pas un saut direct au niveau suivant.
+  const nextLesson = await prisma.lesson.findFirst({
+    where: {
+      published: true,
+      chapter: { levelId: lesson.chapter.levelId },
+      OR: [
+        { chapterId: lesson.chapterId, number: { gt: lesson.number } },
+        { chapter: { number: { gt: lesson.chapter.number } } },
+      ],
+    },
+    orderBy: [{ chapter: { number: "asc" } }, { number: "asc" }],
+    select: { slug: true, chapter: { select: { slug: true } } },
+  });
+  const next = nextLesson
+    ? {
+        href: `/parcours/${niveau}/${nextLesson.chapter.slug}/${nextLesson.slug}`,
+        label: "Leçon suivante",
+      }
+    : { href: `/parcours/${niveau}/evaluation`, label: "Passer l'évaluation de niveau" };
+
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-6 py-8">
       <header className="space-y-2">
@@ -79,6 +103,8 @@ export default async function LeconPage({
         blockCount={lesson.blockCount}
         initialBlockIndex={progress?.blockIndex ?? 0}
         initialCompleted={progress?.status === "COMPLETED"}
+        nextHref={next.href}
+        nextLabel={next.label}
       />
 
       <div className="space-y-8">

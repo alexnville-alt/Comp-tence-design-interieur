@@ -67,4 +67,14 @@ test("marquer une leçon comme terminée", async ({ page }) => {
   // La complétion persiste au rechargement (écrite en base, pas en mémoire client).
   await page.reload();
   await expect(page.getByText("Leçon terminée.")).toBeVisible();
+
+  // Un lien « Leçon suivante » permet d'enchaîner sans repasser par le
+  // tableau de bord ou la page du chapitre.
+  const nextLink = page.getByRole("link", { name: "Leçon suivante" });
+  await expect(nextLink).toBeVisible();
+  await nextLink.click();
+  await expect(page).toHaveURL(/\/parcours\/decouverte\/notions-generales\/le-vocabulaire-de-base$/);
+  await expect(
+    page.getByRole("heading", { name: "Le vocabulaire de base" }),
+  ).toBeVisible();
 });

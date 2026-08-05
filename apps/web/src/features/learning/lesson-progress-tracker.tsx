@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { CheckCircle2, X } from "lucide-react";
 import { cn } from "@atelier/ui";
 import { Button } from "@/components/ui/button";
@@ -28,11 +29,15 @@ export function LessonProgressTracker({
   blockCount,
   initialBlockIndex,
   initialCompleted,
+  nextHref,
+  nextLabel,
 }: {
   lessonId: string;
   blockCount: number;
   initialBlockIndex: number;
   initialCompleted: boolean;
+  nextHref: string;
+  nextLabel: string;
 }) {
   const [furthest, setFurthest] = useState(initialBlockIndex);
   const [completed, setCompleted] = useState(initialCompleted);
@@ -158,15 +163,20 @@ export function LessonProgressTracker({
       </div>
 
       {completed ? (
-        <div
-          role="status"
-          className="flex items-center gap-2 rounded-[var(--radius-atelier)] border border-[var(--success)] bg-[var(--success-subtle)] p-4 text-sm text-[var(--text)]"
-        >
-          <CheckCircle2
-            className="size-5 shrink-0 text-[var(--success)]"
-            aria-hidden="true"
-          />
-          <p>Leçon terminée.</p>
+        <div className="space-y-3">
+          <div
+            role="status"
+            className="flex items-center gap-2 rounded-[var(--radius-atelier)] border border-[var(--success)] bg-[var(--success-subtle)] p-4 text-sm text-[var(--text)]"
+          >
+            <CheckCircle2
+              className="size-5 shrink-0 text-[var(--success)]"
+              aria-hidden="true"
+            />
+            <p>Leçon terminée.</p>
+          </div>
+          <Button asChild>
+            <Link href={nextHref}>{nextLabel}</Link>
+          </Button>
         </div>
       ) : (
         <Button type="button" onClick={handleComplete} disabled={isPending}>
