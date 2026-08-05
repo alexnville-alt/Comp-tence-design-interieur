@@ -71,10 +71,16 @@ export async function searchLibrary(
     );
   }
 
+  // `WHERE true` plutôt que `Prisma.empty` quand aucun filtre n'est actif :
+  // la clause reste structurellement identique dans tous les cas (un seul
+  // gabarit de requête, jamais deux), ce qui a résolu un `syntax error at or
+  // near "$1"` observé sur un moteur Prisma Windows précisément quand
+  // `WHERE` était absent — `Prisma.empty` semble s'y comporter différemment
+  // qu'sur les moteurs Linux/macOS testés ici.
   const whereClause =
     conditions.length > 0
       ? Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}`
-      : Prisma.empty;
+      : Prisma.sql`WHERE true`;
 
   // Pertinence textuelle quand une requête est fournie ; alphabétique sinon
   // (une liste de facettes sans requête n'a pas de score à trier).
@@ -82,12 +88,15 @@ export async function searchLibrary(
     ? Prisma.sql`ORDER BY ts_rank("searchVector", websearch_to_tsquery('french', ${trimmedQuery})) DESC`
     : Prisma.sql`ORDER BY name ASC`;
 
+  // `SEARCH_LIMIT` est une constante du fichier, jamais une valeur
+  // utilisateur : littéral SQL sûr, et un paramètre lié de moins qui aurait
+  // pu être seul en jeu dans le même bug.
   return prisma.$queryRaw<LibrarySearchResult[]>`
     SELECT id, slug, category, name, summary, "budgetTier", "bestFor", "noWorksNeeded"
     FROM "LibraryItem"
     ${whereClause}
     ${orderClause}
-    LIMIT ${SEARCH_LIMIT}
+    LIMIT ${Prisma.raw(String(SEARCH_LIMIT))}
   `;
 }
 
