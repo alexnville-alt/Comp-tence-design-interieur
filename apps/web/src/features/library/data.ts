@@ -1,10 +1,4 @@
-import {
-  Prisma,
-  prisma,
-  type BudgetTier,
-  type LibCategory,
-  type RoomType,
-} from "@atelier/db";
+import { prisma, type BudgetTier, type LibCategory, type RoomType } from "@atelier/db";
 
 /**
  * Recherche et facettes de la bibliothèque (docs/05 M7).
@@ -12,11 +6,18 @@ import {
  * `searchVector` (tsvector généré par PostgreSQL) et `embedding`
  * (`vector(1024)`, ADR-0013) sont des colonnes `Unsupported` pour Prisma :
  * le client généré ne peut ni les lire ni les filtrer via son API
- * habituelle. D'où `$queryRaw` ici plutôt qu'un `findMany` — les seuls
- * champs réellement dynamiques (catégorie, budget, pièce, requête texte)
- * passent par des paramètres liés (`Prisma.sql`), jamais par de la
- * concaténation de chaîne : aucune valeur utilisateur n'atteint le SQL sous
- * forme de texte brut.
+ * habituelle. D'où une requête brute plutôt qu'un `findMany`.
+ *
+ * `$queryRawUnsafe` + un tableau de valeurs séparé — et non `$queryRaw`
+ * avec des fragments `Prisma.sql` imbriqués — après avoir constaté qu'un
+ * moteur Prisma sous Windows envoyait les fragments `WHERE`/`ORDER BY`
+ * eux-mêmes comme des paramètres liés (`$1`, `$2`) au lieu de les insérer
+ * comme texte SQL (confirmé dans les logs Postgres : la requête reçue
+ * contenait littéralement `$1` / `$2` à la place des clauses). En
+ * construisant la chaîne SQL nous-mêmes et en ne laissant Prisma lier que
+ * les valeurs effectivement dynamiques (jamais de concaténation de valeur
+ * utilisateur dans la chaîne), on évite entièrement ce chemin de code
+ * défaillant sur cette plateforme.
  */
 
 export interface LibrarySearchParams {
@@ -49,55 +50,58 @@ const SEARCH_LIMIT = 100;
 export async function searchLibrary(
   params: LibrarySearchParams,
 ): Promise<LibrarySearchResult[]> {
-  const conditions: Prisma.Sql[] = [];
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+
+  // Ajoute une valeur au tableau lié et renvoie son placeholder positionnel
+  // (`$1`, `$2`, …) — jamais la valeur elle-même dans la chaîne SQL.
+  function bind(value: unknown): string {
+    values.push(value);
+    return `$${values.length}`;
+  }
 
   if (params.category) {
-    conditions.push(Prisma.sql`category = ${params.category}::"LibCategory"`);
+    conditions.push(`category = ${bind(params.category)}::"LibCategory"`);
   }
   if (params.budgetTier) {
-    conditions.push(Prisma.sql`"budgetTier" = ${params.budgetTier}::"BudgetTier"`);
+    conditions.push(`"budgetTier" = ${bind(params.budgetTier)}::"BudgetTier"`);
   }
   if (params.bestFor) {
-    conditions.push(Prisma.sql`${params.bestFor}::"RoomType" = ANY("bestFor")`);
+    conditions.push(`${bind(params.bestFor)}::"RoomType" = ANY("bestFor")`);
   }
   if (params.noWorksNeeded) {
-    conditions.push(Prisma.sql`"noWorksNeeded" = true`);
+    conditions.push(`"noWorksNeeded" = true`);
   }
 
   const trimmedQuery = params.query?.trim();
   if (trimmedQuery) {
     conditions.push(
-      Prisma.sql`"searchVector" @@ websearch_to_tsquery('french', ${trimmedQuery})`,
+      `"searchVector" @@ websearch_to_tsquery('french', ${bind(trimmedQuery)})`,
     );
   }
 
-  // `WHERE true` plutôt que `Prisma.empty` quand aucun filtre n'est actif :
-  // la clause reste structurellement identique dans tous les cas (un seul
-  // gabarit de requête, jamais deux), ce qui a résolu un `syntax error at or
-  // near "$1"` observé sur un moteur Prisma Windows précisément quand
-  // `WHERE` était absent — `Prisma.empty` semble s'y comporter différemment
-  // que sur les moteurs Linux/macOS testés ici.
-  const whereClause =
-    conditions.length > 0
-      ? Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}`
-      : Prisma.sql`WHERE true`;
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   // Pertinence textuelle quand une requête est fournie ; alphabétique sinon
-  // (une liste de facettes sans requête n'a pas de score à trier).
+  // (une liste de facettes sans requête n'a pas de score à trier). Un
+  // deuxième placeholder distinct pour `trimmedQuery` plutôt que de
+  // réutiliser celui du `WHERE` : plus simple, et Postgres n'impose aucune
+  // unicité de valeur entre paramètres.
   const orderClause = trimmedQuery
-    ? Prisma.sql`ORDER BY ts_rank("searchVector", websearch_to_tsquery('french', ${trimmedQuery})) DESC`
-    : Prisma.sql`ORDER BY name ASC`;
+    ? `ORDER BY ts_rank("searchVector", websearch_to_tsquery('french', ${bind(trimmedQuery)})) DESC`
+    : `ORDER BY name ASC`;
 
   // `SEARCH_LIMIT` est une constante du fichier, jamais une valeur
-  // utilisateur : littéral SQL sûr, et un paramètre lié de moins qui aurait
-  // pu être seul en jeu dans le même bug.
-  return prisma.$queryRaw<LibrarySearchResult[]>`
+  // utilisateur : littéral SQL sûr, pas besoin d'un paramètre lié.
+  const sql = `
     SELECT id, slug, category, name, summary, "budgetTier", "bestFor", "noWorksNeeded"
     FROM "LibraryItem"
     ${whereClause}
     ${orderClause}
-    LIMIT ${Prisma.raw(String(SEARCH_LIMIT))}
+    LIMIT ${SEARCH_LIMIT}
   `;
+
+  return prisma.$queryRawUnsafe<LibrarySearchResult[]>(sql, ...values);
 }
 
 export interface RelatedItem {
