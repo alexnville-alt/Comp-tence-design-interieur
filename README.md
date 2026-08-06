@@ -62,6 +62,30 @@ testés sans base de données ni navigateur. Le nouveau paquet `packages/ai`
 n'est exercé que par la suite « en direct » (`AI_LIVE=1`, manuelle, jamais en
 CI — ADR-0011).
 
+### Corrections post-livraison (après M12)
+
+La feuille de route M0→M12 ci-dessus est livrée et validée. Deux correctifs
+réels sont intervenus après cette validation, remontés lors d'un test
+utilisateur en conditions réelles hors de cet environnement de
+développement (Windows) :
+
+- **Enchaînement de leçon (M2)** — marquer une leçon comme terminée n'offrait
+  aucun moyen de continuer sur place : il fallait repasser par le tableau de
+  bord ou la page du chapitre pour trouver la suite. Un lien « Leçon
+  suivante » (ou « Chapitre suivant », ou « Passer l'évaluation de niveau »
+  en fin de niveau) apparaît maintenant à côté de la confirmation, résolu
+  côté serveur dans l'ordre strict du parcours (commit `b04f976`).
+- **Recherche bibliothèque (M7)** — `searchLibrary` échouait
+  systématiquement (`syntax error at or near "$1"`, Postgres 42601) sur un
+  moteur Prisma Windows, qui envoyait les fragments SQL `WHERE`/`ORDER BY`
+  eux-mêmes comme des paramètres liés au lieu de les insérer comme texte SQL
+  — confirmé dans les logs du conteneur Postgres de l'utilisateur, jamais
+  reproduit sur Linux/macOS malgré un schéma et une version Postgres
+  identiques. Corrigé en construisant la requête comme une seule chaîne SQL
+  avec des paramètres `$N` gérés à la main (`$queryRawUnsafe`), qui évite
+  entièrement l'imbrication de fragments `Prisma.sql` en cause
+  (commit `0d77ed0`).
+
 ---
 
 ## Documentation
