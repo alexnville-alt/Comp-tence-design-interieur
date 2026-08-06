@@ -233,6 +233,7 @@ async function syncFamousInteriors(contentRoot: string): Promise<number> {
       circulation: item.circulation,
       takeaways: item.takeaways,
       order: item.order,
+      externalLink: item.externalLink ?? null,
     };
     await prisma.famousInterior.upsert({
       where: { slug: item.slug },

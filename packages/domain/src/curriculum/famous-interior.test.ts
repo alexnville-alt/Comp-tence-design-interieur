@@ -54,4 +54,22 @@ describe("FamousInteriorFrontmatterSchema", () => {
       FamousInteriorFrontmatterSchema.parse({ ...valid, slug: "Villa Savoye" }),
     ).toThrow();
   });
+
+  it("accepte l'absence de lien externe", () => {
+    expect(FamousInteriorFrontmatterSchema.parse(valid).externalLink).toBeUndefined();
+  });
+
+  it("accepte un lien externe valide", () => {
+    const parsed = FamousInteriorFrontmatterSchema.parse({
+      ...valid,
+      externalLink: "https://fr.wikipedia.org/wiki/Villa_Savoye",
+    });
+    expect(parsed.externalLink).toBe("https://fr.wikipedia.org/wiki/Villa_Savoye");
+  });
+
+  it("rejette un lien externe qui n'est pas une URL", () => {
+    expect(() =>
+      FamousInteriorFrontmatterSchema.parse({ ...valid, externalLink: "pas une url" }),
+    ).toThrow();
+  });
 });

@@ -35,6 +35,8 @@ export interface FamousInteriorDetail {
   materials: string;
   circulation: string;
   takeaways: string[];
+  /** Page externe présentant le lieu (photos, contexte) — jamais hébergé ici. */
+  externalLink: string | null;
 }
 
 export async function getFamousInterior(
@@ -54,6 +56,7 @@ export async function getFamousInterior(
       materials: true,
       circulation: true,
       takeaways: true,
+      externalLink: true,
     },
   });
 }

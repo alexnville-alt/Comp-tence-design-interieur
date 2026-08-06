@@ -11,6 +11,12 @@ import { z } from "zod";
  * la grille reste entièrement textuelle plutôt que de risquer un schéma
  * approximatif faussement présenté comme fidèle — voir la note de périmètre
  * dans le README.
+ *
+ * `externalLink` (post-M12) contourne cette même contrainte de droits sans y
+ * renoncer : un lien sortant vers une page qui présente le lieu (photos
+ * incluses) n'héberge ni ne reproduit rien nous-mêmes — la fiche ne fait que
+ * pointer vers une source existante, à charge pour elle d'être en règle sur
+ * ses propres images.
  */
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -40,6 +46,8 @@ export const FamousInteriorFrontmatterSchema = z.object({
     .array(z.string().trim().min(1))
     .min(1, "Au moins un point à retenir est requis."),
   order: z.number().int().nonnegative().default(0),
+  /** Facultatif : page présentant le lieu (photos, contexte) — jamais hébergé ici. */
+  externalLink: z.string().trim().url("Le lien doit être une URL valide.").optional(),
 });
 
 export type FamousInteriorFrontmatter = z.infer<typeof FamousInteriorFrontmatterSchema>;

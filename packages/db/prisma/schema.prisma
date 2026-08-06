@@ -1130,6 +1130,8 @@ model FamousInterior {
   /// Ce qu'on peut en retenir chez soi (docs/06 §4.2).
   takeaways    String[]
   order        Int      @default(0)
+  /// Facultatif : page présentant le lieu (photos, contexte) — jamais hébergé ici.
+  externalLink String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

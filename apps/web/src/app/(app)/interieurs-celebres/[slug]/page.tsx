@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import { requireOnboardedUser } from "@/lib/auth";
 import { getFamousInterior } from "@/features/transverse/data";
 
@@ -35,6 +36,18 @@ export default async function FamousInteriorPage({
           {item.architect} — {item.year} — {item.location}
         </p>
         <h1 className="text-3xl">{item.name}</h1>
+        {item.externalLink ? (
+          <a
+            href={item.externalLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-[var(--accent)] underline underline-offset-2"
+          >
+            Voir des photos et en savoir plus
+            <ExternalLink className="size-3.5" aria-hidden="true" />
+            <span className="sr-only">(ouvre un site externe dans un nouvel onglet)</span>
+          </a>
+        ) : null}
       </header>
 
       <section className="space-y-2">

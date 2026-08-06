@@ -25,6 +25,19 @@ test("intérieurs célèbres : la liste mène à une fiche d'analyse complète",
     page.getByRole("heading", { name: "Intention de conception" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "À retenir" })).toBeVisible();
+
+  // Lien externe (post-M12) : jamais une image hébergée par l'app elle-même
+  // (voir la note de périmètre du README) — un lien sortant, clairement
+  // identifié, vers une page qui présente le lieu.
+  const externalLink = page.getByRole("link", {
+    name: "Voir des photos et en savoir plus",
+  });
+  await expect(externalLink).toHaveAttribute(
+    "href",
+    "https://fr.wikipedia.org/wiki/Villa_Savoye",
+  );
+  await expect(externalLink).toHaveAttribute("target", "_blank");
+  await expect(externalLink).toHaveAttribute("rel", "noopener noreferrer");
 });
 
 test("projets jalons : la liste mène au brief et aux critères d'évaluation", async ({
