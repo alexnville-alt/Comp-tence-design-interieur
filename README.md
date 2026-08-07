@@ -62,10 +62,10 @@ testés sans base de données ni navigateur. Le nouveau paquet `packages/ai`
 n'est exercé que par la suite « en direct » (`AI_LIVE=1`, manuelle, jamais en
 CI — ADR-0011).
 
-### Corrections post-livraison (après M12)
+### Corrections et améliorations post-livraison (après M12)
 
-La feuille de route M0→M12 ci-dessus est livrée et validée. Deux correctifs
-réels sont intervenus après cette validation, remontés lors d'un test
+La feuille de route M0→M12 ci-dessus est livrée et validée. Les éléments
+suivants sont intervenus après cette validation, remontés lors d'un test
 utilisateur en conditions réelles hors de cet environnement de
 développement (Windows) :
 
@@ -85,6 +85,17 @@ développement (Windows) :
   avec des paramètres `$N` gérés à la main (`$queryRawUnsafe`), qui évite
   entièrement l'imbrication de fragments `Prisma.sql` en cause
   (commit `0d77ed0`).
+- **Lien externe optionnel (M13, contourne le hors périmètre « aucune
+  image »)** — plutôt qu'héberger une image (jamais fait dans ce dépôt, pour
+  des raisons de droits, voir ci-dessous), un champ `externalLink` facultatif
+  permet de pointer vers une page existante qui présente le lieu/matériau
+  (photos incluses), rendu comme un lien clairement sortant. Testé d'abord
+  sur les 12 fiches « intérieurs célèbres » (commit `dbb6ae9`), puis étendu à
+  12 des 54 fiches bibliothèque — celles où un concept identifiable existe
+  réellement (3 styles, 3 essences de bois, 3 pierres, 3 plantes) plutôt que
+  les 42 types de produits génériques, qui n'ont pas de page de référence
+  unique et légitime (commit `2c95518`). Chaque lien a été vérifié
+  individuellement par recherche web, jamais deviné.
 
 ---
 
