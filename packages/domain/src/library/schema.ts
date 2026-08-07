@@ -113,6 +113,15 @@ const libraryItemBase = {
   cheaperAlt: z.array(slugSchema).default([]),
   premiumAlt: z.array(slugSchema).default([]),
   sameFamily: z.array(slugSchema).default([]),
+  /**
+   * Facultatif : page présentant le matériau/style/essence (post-M12, même
+   * mécanisme que les fiches « intérieurs célèbres », docs/06 §4.2) — jamais
+   * hébergé ici. N'a de sens que pour un concept identifiable (une essence de
+   * bois, un style, une espèce de plante) ; pas systématiquement rempli pour
+   * les types de produits génériques, qui n'ont pas de page de référence
+   * unique et légitime vers laquelle pointer.
+   */
+  externalLink: z.string().trim().url("Le lien doit être une URL valide.").optional(),
 };
 
 const StyleAttributesSchema = z.object({

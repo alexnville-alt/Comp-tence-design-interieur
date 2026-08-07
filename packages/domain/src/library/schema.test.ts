@@ -183,4 +183,23 @@ describe("LibraryItemFrontmatterSchema", () => {
       expect(item.attributes.species).toBe("Chêne");
     }
   });
+
+  it("accepte l'absence de lien externe", () => {
+    const item = LibraryItemFrontmatterSchema.parse({
+      ...baseFields(),
+      category: "WOOD",
+      attributes: { species: "Chêne", jankaHardness: 1360, grain: "medium", priceIndex: 4 },
+    });
+    expect(item.externalLink).toBeUndefined();
+  });
+
+  it("rejette un lien externe qui n'est pas une URL", () => {
+    const result = LibraryItemFrontmatterSchema.safeParse({
+      ...baseFields(),
+      category: "WOOD",
+      attributes: { species: "Chêne", jankaHardness: 1360, grain: "medium", priceIndex: 4 },
+      externalLink: "pas une url",
+    });
+    expect(result.success).toBe(false);
+  });
 });

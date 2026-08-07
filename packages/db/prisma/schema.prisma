@@ -830,6 +830,10 @@ model LibraryItem {
   /// un `Asset`, pas une URL — même principe de confidentialité qu'ADR-0008.
   imageAssetId String?
 
+  /// Facultatif : page présentant le matériau/style/essence (post-M12) —
+  /// jamais hébergé ici, contrairement à `imageAssetId` ci-dessus.
+  externalLink String?
+
   /// Recherche plein texte française (docs/05 M7). Colonne générée par
   /// PostgreSQL (`GENERATED ALWAYS AS`, voir la migration) à partir de
   /// `name`/`summary`/`description`/`pros`/`cons`/`mistakes` — jamais écrite

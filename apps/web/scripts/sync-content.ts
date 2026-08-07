@@ -153,6 +153,7 @@ async function syncLibrary(contentRoot: string): Promise<number> {
       styles: item.styles,
       noWorksNeeded: item.noWorksNeeded,
       attributes: item.attributes,
+      externalLink: item.externalLink ?? null,
     };
     const dbItem = await prisma.libraryItem.upsert({
       where: { slug: item.slug },

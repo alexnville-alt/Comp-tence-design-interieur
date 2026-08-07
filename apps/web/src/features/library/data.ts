@@ -130,6 +130,8 @@ export interface LibraryItemDetail {
   noWorksNeeded: boolean;
   attributes: Record<string, unknown>;
   isFavorite: boolean;
+  /** Page externe présentant le matériau/style/essence — jamais hébergé ici. */
+  externalLink: string | null;
   relations: {
     pairsWith: RelatedItem[];
     avoidWith: RelatedItem[];
@@ -201,6 +203,7 @@ export async function getLibraryItemDetail(
     noWorksNeeded: item.noWorksNeeded,
     attributes: item.attributes as Record<string, unknown>,
     isFavorite: item.favorites.length > 0,
+    externalLink: item.externalLink,
     relations,
   };
 }

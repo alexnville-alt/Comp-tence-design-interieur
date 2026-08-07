@@ -53,6 +53,13 @@ test("recherche, facettes, graphe de relations et favoris", async ({ page }) => 
     await page.goto("/bibliotheque/chene-huile");
     await expect(page.getByRole("heading", { name: "Chêne huilé" })).toBeVisible();
 
+    // Lien externe (post-M12, même mécanisme que les fiches « intérieurs
+    // célèbres ») : n'a de sens que pour un concept identifiable (une essence
+    // de bois ici) — jamais une image hébergée par l'app elle-même.
+    await expect(
+      page.getByRole("link", { name: "Voir des photos et en savoir plus" }),
+    ).toHaveAttribute("href", "https://fr.wikipedia.org/wiki/Chêne");
+
     // Symétrique (PAIRS_WITH) et asymétrique (CHEAPER_ALT) — les deux
     // formes de relation déclarées dans le contenu réel (docs/05 M7).
     await expect(page.getByText("S'associe bien avec")).toBeVisible();
