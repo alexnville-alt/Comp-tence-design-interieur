@@ -329,7 +329,9 @@ Lire dans cet ordre :
   Case Study House n° 8, villa Müller, maison Louis Carré, couvent de la
   Tourette, maison Gehry, intérieur haussmannien type) — texte uniquement
   (contexte, intention de conception, lumière, matières, circulation, points
-  à retenir), sans illustration, même choix que la bibliothèque (M7)
+  à retenir), sans illustration hébergée par l'app, même choix que la
+  bibliothèque (M7) ; chacune pointe désormais vers un lien externe vérifié
+  (M13, voir plus haut)
 - Projet jalon A (« Réaménager une pièce simple sur plan ») : contenu pur
   (brief, livrables, critères d'évaluation) qui s'appuie sur l'atelier (M4),
   les générateurs (M8) et le projet personnel (M10) déjà livrés — aucune
@@ -406,7 +408,9 @@ au sein de M7/M8/M9/M10/M11/M12) :
 - **Images de moodboard** : `LibraryItem.imageAssetId` n'est rempli par
   aucune fiche à ce stade (docs/04 §3.8, pipeline de curation visuelle hors
   périmètre) — les éléments sans image s'affichent avec leur libellé, dans
-  l'éditeur, à l'export PNG (M8) et dans le dossier PDF (M10)
+  l'éditeur, à l'export PNG (M8) et dans le dossier PDF (M10). Distinct du
+  lien externe (M13, `externalLink`) : ce dernier pointe vers une page qui
+  présente le matériau, il ne remplace pas une vraie image dans l'éditeur
 - **Import de plan en PDF** : volontairement limité aux images (JPEG/PNG/WebP,
   M10) — le `sharp`/libvips de cet environnement n'a pas de lecture PDF, et
   une dépendance native supplémentaire (`canvas`, pour `pdfjs-dist`) a été
