@@ -2,7 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { z } from "zod";
 import {
   AiSchemaValidationError,
-  type AiEffort,
   type AiProvider,
   type AiResult,
   type AiUsageTokens,
@@ -18,19 +17,31 @@ import { embedWithVoyage } from "./voyage";
 import { zodToJsonSchema } from "./zod-json-schema";
 
 /**
- * Adaptateur de production (ADR-0005, docs/02 §5.2) : `claude-opus-5`, pensée
- * adaptative, sorties structurées, cache de prompt système. N'est jamais
- * exercé en CI — la suite « en direct » (`AI_LIVE=1`) se lance manuellement
- * (ADR-0011) ; il est exclu des seuils de couverture (`vitest.config.ts`).
+ * Adaptateur de production (ADR-0005, docs/02 §5.2), sorties structurées,
+ * cache de prompt système. N'est jamais exercé en CI — la suite « en direct »
+ * (`AI_LIVE=1`) se lance manuellement (ADR-0011) ; il est exclu des seuils de
+ * couverture (`vitest.config.ts`).
+ *
+ * Modèle : `claude-haiku-4-5`, à la place du `claude-opus-5` par défaut de
+ * l'ADR-0005 — choix personnel du porteur du projet pour un usage local à
+ * coût réduit (~5x moins cher que `claude-opus-5` en entrée comme en
+ * sortie). L'ADR anticipait ce cas (« router une tâche simple vers un modèle
+ * moins cher sans toucher au métier ») mais Haiku ne prend en charge ni la
+ * pensée adaptative (`thinking`) ni `output_config.effort` (erreur 400) —
+ * les deux sont donc omis ci-dessous, pour toutes les fonctions IA de
+ * l'application (chat, correction d'exercices, analyse de photo, moodboard,
+ * critique de projet) puisque cet adaptateur n'a qu'un seul modèle. La
+ * qualité d'analyse d'image, motif principal du choix initial de
+ * `claude-opus-5` dans l'ADR, en pâtit potentiellement.
  */
 
-const MODEL = "claude-opus-5";
+const MODEL = "claude-haiku-4-5";
 // Le streaming systématique évite le délai d'expiration HTTP au-delà
 // d'environ 16 000 tokens de sortie non streamés (docs/02 §5.2) ; comme on
 // veut de toute façon un affichage progressif, `max_tokens` peut être généreux.
 const MAX_TOKENS = 64_000;
-const USD_PER_MTOK_INPUT = 5;
-const USD_PER_MTOK_OUTPUT = 25;
+const USD_PER_MTOK_INPUT = 1;
+const USD_PER_MTOK_OUTPUT = 5;
 // Taux fixe, à titre d'ordre de grandeur : un taux de change en direct serait
 // un appel réseau de plus sur le chemin critique du coût, pour une précision
 // que la comptabilité interne (AiUsage) n'exige pas.
@@ -127,7 +138,6 @@ async function runStructured<T>(
   system: string,
   initialMessages: Anthropic.MessageParam[],
   schema: z.ZodType<T>,
-  effort: AiEffort,
 ): Promise<AiResult<T>> {
   const format = { type: "json_schema" as const, schema: zodToJsonSchema(schema) };
   let messages = initialMessages;
@@ -137,8 +147,9 @@ async function runStructured<T>(
     const { text, usage } = await streamText({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      thinking: { type: "adaptive" },
-      output_config: { effort, format },
+      // Ni `thinking` ni `output_config.effort` : non pris en charge par
+      // claude-haiku-4-5 (erreur 400) — voir le commentaire en tête de fichier.
+      output_config: { format },
       system: systemBlock(system),
       messages,
     });
@@ -178,12 +189,12 @@ async function runStructured<T>(
 }
 
 export const anthropicProvider: AiProvider = {
-  async *streamChat({ system, messages, effort = "high" }: ChatInput) {
+  async *streamChat({ system, messages }: ChatInput) {
+    // Ni `thinking` ni `output_config.effort` : non pris en charge par
+    // claude-haiku-4-5 (erreur 400) — voir le commentaire en tête de fichier.
     const stream = client.messages.stream({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      thinking: { type: "adaptive" },
-      output_config: { effort },
       system: systemBlock(system),
       messages: toAnthropicMessages(messages),
     });
@@ -198,17 +209,12 @@ export const anthropicProvider: AiProvider = {
   },
 
   async complete<T>(input: StructuredInput<T>): Promise<AiResult<T>> {
-    return runStructured(
-      input.system,
-      toAnthropicMessages(input.messages),
-      input.schema,
-      input.effort ?? "high",
-    );
+    return runStructured(input.system, toAnthropicMessages(input.messages), input.schema);
   },
 
   async analyzeImage<T>(input: VisionInput<T>): Promise<AiResult<T>> {
     const messages = withImages(toAnthropicMessages(input.messages ?? []), input.images);
-    return runStructured(input.system, messages, input.schema, input.effort ?? "high");
+    return runStructured(input.system, messages, input.schema);
   },
 
   embed(input: EmbedInput): Promise<EmbedResult> {
